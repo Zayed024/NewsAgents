@@ -1,0 +1,175 @@
+from pydantic import BaseModel, Field
+from typing import Optional
+from datetime import datetime
+
+
+# --- Article Models ---
+class Article(BaseModel):
+    id: str
+    title: str
+    published_at: str
+    category: str  # macro, sector, market, expert, historical, tax
+    content: str
+    author: str
+    tags: list[str] = []
+    url: str = ""
+
+
+# --- Entity Models ---
+class EntityMap(BaseModel):
+    people: dict[str, list[str]] = {}       # person_name -> [article_ids]
+    companies: dict[str, list[str]] = {}    # company_name -> [article_ids]
+    sectors: dict[str, list[str]] = {}      # sector_name -> [article_ids]
+    policies: dict[str, list[str]] = {}     # policy_item -> [article_ids]
+    keywords: dict[str, list[str]] = {}     # keyword -> [article_ids]
+
+
+# --- Angle / Cluster Models ---
+class AngleCluster(BaseModel):
+    angle_name: str          # e.g. "Macro Impact", "Sector Winners & Losers"
+    description: str         # brief description of this angle
+    article_ids: list[str]   # which articles belong to this cluster
+    key_themes: list[str]    # main themes within this angle
+
+
+class AngleClusters(BaseModel):
+    angles: list[AngleCluster]
+
+
+# --- Synthesis Models ---
+class SynthesisEntry(BaseModel):
+    angle_name: str
+    synthesis: str           # dense paragraph with citations
+    source_articles: list[str]  # article IDs cited
+    key_takeaways: list[str]
+
+
+class BriefingSynthesis(BaseModel):
+    entries: list[SynthesisEntry]
+
+
+# --- Query Models ---
+class QueryRequest(BaseModel):
+    briefing_id: str = "default"
+    question: str
+
+
+class QueryResponse(BaseModel):
+    answer: str
+    sources: list[str]
+    angle: str
+    is_non_overlapping: bool = True
+
+
+# --- User Profile Models ---
+class UserProfile(BaseModel):
+    user_id: str
+    name: str
+    age: int
+    role: str
+    interests: list[str] = []
+    reading_level: str = "intermediate"  # beginner, intermediate, expert
+    preferred_format: str = "standard"
+    portfolio_exposure: list[str] = []
+    news_consumption: str = ""
+    investing_experience: str = ""
+    company_type: str = ""
+
+
+# --- Personalised Feed Models ---
+class FeedItem(BaseModel):
+    article_id: str
+    original_title: str
+    adapted_title: str
+    adapted_content: str
+    format_type: str        # "executive_summary", "explainer", "data_table", "card"
+    relevance_score: float
+    adaptation_notes: str   # what was changed and why
+
+
+class PersonaFeed(BaseModel):
+    user_profile: UserProfile
+    feed_items: list[FeedItem]
+    reading_level_applied: str
+    format_applied: str
+
+
+class FeedComparison(BaseModel):
+    feed_a: PersonaFeed
+    feed_b: PersonaFeed
+    delta_summary: str      # e.g. "8 of 10 stories differ..."
+
+
+# --- Video Models ---
+class VideoScript(BaseModel):
+    script_hindi: str
+    script_transliteration: str
+    estimated_duration_seconds: int
+    key_facts_used: list[str]
+    analogies_used: list[str] = []
+
+
+class FactCheckClaim(BaseModel):
+    claim: str
+    source_match: bool
+    source_text: str = ""
+
+
+class FactCheckReport(BaseModel):
+    claims: list[FactCheckClaim]
+    accuracy_score: float
+    flagged_claims: list[str] = []
+
+
+class VideoResult(BaseModel):
+    video_path: str = ""
+    script: VideoScript | None = None
+    fact_check: FactCheckReport | None = None
+    generation_time_seconds: float = 0.0
+    audio_path: str = ""
+    status: str = "success"  # success, degraded, failed
+
+
+# --- Audit Models ---
+class AuditEntry(BaseModel):
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+    session_id: str = "default"
+    agent_name: str = ""
+    action: str = ""
+    model_used: str = ""
+    input_summary: str = ""
+    output_summary: str = ""
+    latency_ms: int = 0
+    status: str = "success"  # success, fallback, error
+    error_detail: str = ""
+
+
+# --- API Response Wrappers ---
+class NavigatorBriefingResponse(BaseModel):
+    briefing_id: str
+    angles: list[AngleCluster]
+    syntheses: list[SynthesisEntry]
+    entity_map: EntityMap | None = None
+    audit_trail: list[AuditEntry] = []
+
+
+class NavigatorQueryResponse(BaseModel):
+    answer: str
+    sources: list[str]
+    angle: str
+    audit_trail: list[AuditEntry] = []
+
+
+class FeedCompareResponse(BaseModel):
+    feed_a: PersonaFeed
+    feed_b: PersonaFeed
+    delta_summary: str
+    audit_trail: list[AuditEntry] = []
+
+
+class VideoGenerateResponse(BaseModel):
+    video_path: str
+    script: VideoScript | None = None
+    fact_check: FactCheckReport | None = None
+    generation_time_seconds: float
+    audit_trail: list[AuditEntry] = []

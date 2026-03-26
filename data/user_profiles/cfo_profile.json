@@ -1,0 +1,13 @@
+{
+    "user_id": "user-cfo-001",
+    "name": "Rajesh Mehta",
+    "age": 45,
+    "role": "CFO, Listed Mid-Cap Manufacturing Company",
+    "interests": ["macro policy", "fiscal deficit", "taxation policy", "RBI monetary policy", "corporate governance", "capex outlook", "bond yields"],
+    "reading_level": "expert",
+    "preferred_format": "data-dense executive summary with key numbers",
+    "portfolio_exposure": ["banking", "infrastructure", "manufacturing", "government bonds"],
+    "news_consumption": "20+ articles/day, prefers data tables and policy analysis",
+    "investing_experience": "20+ years, manages corporate treasury",
+    "company_type": "Listed mid-cap manufacturing"
+}

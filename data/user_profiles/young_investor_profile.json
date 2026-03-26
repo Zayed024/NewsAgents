@@ -1,0 +1,13 @@
+{
+    "user_id": "user-young-001",
+    "name": "Priya Sharma",
+    "age": 24,
+    "role": "Software Developer",
+    "interests": ["SIPs", "tax saving", "tech stocks", "personal finance basics", "mutual funds"],
+    "reading_level": "beginner",
+    "preferred_format": "explainer with analogies, short paragraphs, visual-friendly",
+    "portfolio_exposure": ["index funds", "tech ETF", "ELSS"],
+    "news_consumption": "3-5 articles/day, mostly via reels and short-form content",
+    "investing_experience": "6 months, first-generation investor",
+    "company_type": ""
+}
