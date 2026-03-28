@@ -1,6 +1,8 @@
 """SynthesisEngine agent — produces dense synthesis for each angle cluster."""
 
-from src.llm import call_llm, parse_json_response
+import re
+
+from src.llm import call_llm, parse_json_response, is_llm_unavailable_response
 from src.config import GEMINI_PRO
 from src.audit import log_agent_step, AuditTimer
 from src.models import AngleCluster, Article, SynthesisEntry, BriefingSynthesis
@@ -77,15 +79,10 @@ Produce a JSON response:
                 data = parse_json_response(response)
                 entry = SynthesisEntry(**data)
             except Exception:
-                # Fallback: basic concatenation
-                entry = SynthesisEntry(
-                    angle_name=angle.angle_name,
-                    synthesis=f"[Synthesis pending] This angle covers: {angle.description}. "
-                              f"Key themes: {', '.join(angle.key_themes)}. "
-                              f"Based on {len(angle.article_ids)} articles.",
-                    source_articles=angle.article_ids,
-                    key_takeaways=angle.key_themes,
-                )
+                entry = _deterministic_synthesis_entry(angle, article_map)
+
+            if is_llm_unavailable_response(entry.synthesis):
+                entry = _deterministic_synthesis_entry(angle, article_map)
 
             results.append(entry)
 
@@ -100,3 +97,83 @@ Produce a JSON response:
         )
 
     return results
+
+
+def _deterministic_synthesis_entry(
+    angle: AngleCluster,
+    article_map: dict[str, Article],
+) -> SynthesisEntry:
+    cluster_articles = [article_map[aid] for aid in angle.article_ids if aid in article_map]
+    cited_ids = [a.id for a in cluster_articles]
+
+    scored_sentences: list[tuple[int, str, str]] = []
+    for article in cluster_articles:
+        for sentence in _split_sentences(article.content):
+            s = sentence.strip()
+            if len(s) < 40:
+                continue
+            score = _sentence_score(s, angle.key_themes)
+            scored_sentences.append((score, s, article.id))
+
+    scored_sentences.sort(key=lambda x: x[0], reverse=True)
+    top = scored_sentences[:6]
+
+    if not top:
+        synthesis = (
+            f"This angle, {angle.angle_name}, spans {len(cluster_articles)} ET articles and highlights "
+            f"{angle.description.lower()}. Available evidence suggests notable movement across themes "
+            f"{', '.join(angle.key_themes[:4])}."
+        )
+        takeaways = [
+            f"{angle.angle_name} is supported by {len(cluster_articles)} source articles.",
+            f"Primary themes include {', '.join(angle.key_themes[:3])}.",
+            "Data points should be interpreted with implementation timelines in mind.",
+        ]
+        return SynthesisEntry(
+            angle_name=angle.angle_name,
+            synthesis=synthesis,
+            source_articles=cited_ids,
+            key_takeaways=takeaways,
+        )
+
+    synthesis_lines = [
+        f"In the {angle.angle_name} lens, ET coverage indicates {angle.description.lower()}.",
+    ]
+    for _, sent, aid in top[:4]:
+        synthesis_lines.append(f"{sent} [{aid}]")
+
+    synthesis_lines.append(
+        "Taken together, these reports suggest the impact will depend on execution speed, financing conditions, and follow-up policy circulars."
+    )
+
+    takeaways = []
+    for _, sent, aid in top[:5]:
+        short = sent[:170].strip()
+        if len(sent) > 170:
+            short += "..."
+        takeaways.append(f"{short} [{aid}]")
+
+    return SynthesisEntry(
+        angle_name=angle.angle_name,
+        synthesis=" ".join(synthesis_lines),
+        source_articles=cited_ids,
+        key_takeaways=takeaways[:5],
+    )
+
+
+def _split_sentences(text: str) -> list[str]:
+    return [s for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
+
+
+def _sentence_score(sentence: str, themes: list[str]) -> int:
+    lowered = sentence.lower()
+    score = 1
+    if re.search(r"\b\d+(?:\.\d+)?\b", sentence):
+        score += 2
+    for theme in themes:
+        if theme.lower() in lowered:
+            score += 2
+    for term in ["rs", "%", "crore", "lakh", "growth", "deficit", "tax", "allocation"]:
+        if term in lowered:
+            score += 1
+    return score

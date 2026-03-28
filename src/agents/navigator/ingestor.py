@@ -1,5 +1,7 @@
 """ArticleIngestor agent — parses articles and extracts structured metadata."""
 
+import re
+
 from src.llm import call_llm, parse_json_response
 from src.config import GEMINI_FLASH
 from src.audit import log_agent_step, AuditTimer
@@ -65,19 +67,8 @@ Return a JSON array where each element has:
         try:
             result = parse_json_response(response)
         except Exception:
-            # If parsing fails, return basic metadata from articles themselves
-            result = [
-                {
-                    "id": a.id,
-                    "title": a.title,
-                    "category": a.category,
-                    "summary": a.content[:100],
-                    "sentiment": "neutral",
-                    "key_entities": {"people": [], "companies": [], "sectors": [], "policies": []},
-                    "relevance_tags": a.tags,
-                }
-                for a in articles
-            ]
+            # If parsing fails, use deterministic extraction so downstream agents still have useful context.
+            result = [_deterministic_article_metadata(a) for a in articles]
 
     log_agent_step(
         agent_name="ArticleIngestor",
@@ -91,3 +82,103 @@ Return a JSON array where each element has:
     )
 
     return result
+
+
+def _deterministic_article_metadata(article: Article) -> dict:
+    text = f"{article.title}. {article.content}"
+    summary = _first_sentence(article.content)
+    return {
+        "id": article.id,
+        "title": article.title,
+        "category": article.category,
+        "summary": summary,
+        "sentiment": _estimate_sentiment(text),
+        "key_entities": {
+            "people": _extract_people(text),
+            "companies": _extract_companies(text),
+            "sectors": _extract_sectors(text, article.tags),
+            "policies": _extract_policies(text),
+        },
+        "relevance_tags": list(dict.fromkeys(article.tags + _extract_tags_from_text(text)))[:10],
+    }
+
+
+def _first_sentence(content: str) -> str:
+    parts = re.split(r"(?<=[.!?])\s+", content.strip())
+    return parts[0][:220] if parts and parts[0] else content[:220]
+
+
+def _estimate_sentiment(text: str) -> str:
+    lowered = text.lower()
+    pos = sum(1 for w in ["boost", "growth", "surge", "gain", "positive", "improve", "reform"] if w in lowered)
+    neg = sum(1 for w in ["risk", "concern", "decline", "dip", "negative", "stress", "slowdown"] if w in lowered)
+    if pos > neg + 1:
+        return "positive"
+    if neg > pos + 1:
+        return "negative"
+    if pos > 0 and neg > 0:
+        return "mixed"
+    return "neutral"
+
+
+def _extract_people(text: str) -> list[str]:
+    matches = re.findall(r"\b[A-Z][a-z]+\s+[A-Z][a-z]+\b", text)
+    blacklist = {"Union Budget", "Economic Times", "Budget Day", "Market Reaction"}
+    out = []
+    for m in matches:
+        if m in blacklist:
+            continue
+        if m not in out:
+            out.append(m)
+    return out[:8]
+
+
+def _extract_companies(text: str) -> list[str]:
+    patterns = [
+        r"\b[A-Z][A-Za-z0-9&.-]{1,30}\s+(?:Bank|AMC|Ltd|Limited|Corp|Corporation|Systems|Technologies|Pharma)\b",
+        r"\b(?:Infosys|TCS|Wipro|Cipla|Apollo Hospitals|HDFC Bank|ICICI Bank|SBI)\b",
+    ]
+    out = []
+    for pat in patterns:
+        for match in re.findall(pat, text):
+            if match not in out:
+                out.append(match)
+    return out[:8]
+
+
+def _extract_sectors(text: str, tags: list[str]) -> list[str]:
+    lowered = text.lower()
+    sector_terms = [
+        "it", "technology", "pharma", "healthcare", "banking", "real estate",
+        "infrastructure", "defence", "agriculture", "automobile", "fmcg",
+    ]
+    out = [term for term in sector_terms if term in lowered]
+    for tag in tags:
+        t = tag.replace("-", " ").lower()
+        if any(k in t for k in ["sector", "bank", "pharma", "health", "real", "it", "infra"]):
+            out.append(t)
+    deduped = []
+    for s in out:
+        normalized = s.title()
+        if normalized not in deduped:
+            deduped.append(normalized)
+    return deduped[:8]
+
+
+def _extract_policies(text: str) -> list[str]:
+    lowered = text.lower()
+    policy_phrases = [
+        "fiscal deficit", "capital expenditure", "capex", "tax", "income tax",
+        "deposit insurance", "borrowing programme", "rbi rate cut", "pli", "customs duty",
+    ]
+    out = [p.title() for p in policy_phrases if p in lowered]
+    return out[:8]
+
+
+def _extract_tags_from_text(text: str) -> list[str]:
+    lowered = text.lower()
+    candidates = [
+        "fiscal-deficit", "gdp-growth", "capital-expenditure", "market-reaction",
+        "it-sector", "healthcare", "banking", "real-estate", "tax-changes", "rbi-policy",
+    ]
+    return [c for c in candidates if c.replace("-", " ") in lowered or c in lowered]

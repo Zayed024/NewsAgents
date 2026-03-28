@@ -9,6 +9,19 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import streamlit as st
 
+from src.tools.corpus.operations import (
+    compute_freshness_metrics,
+    load_recent_run_summaries,
+    run_crawl_refresh,
+    run_subset_refresh,
+)
+from src.tools.corpus.compliance import (
+    generate_compliance_report,
+    load_compliance_snapshots,
+    is_corpus_kill_switch_enabled,
+)
+from src.config import is_retrieval_contracts_enabled
+
 st.set_page_config(
     page_title="ET AI News Navigator",
     page_icon="📰",
@@ -79,6 +92,97 @@ with col2:
     st.markdown("**Multi-Agent Architecture**")
     st.caption("12 agents | 3 models | Smart routing")
 
+    with st.expander("Settings", expanded=False):
+        st.caption("Operations and compliance controls (separate from main product tabs)")
+
+        st.markdown("**Runtime Flags**")
+        st.caption(f"RETRIEVAL_CONTRACTS_ENABLED: {is_retrieval_contracts_enabled()}")
+        st.caption(f"CORPUS_KILL_SWITCH: {is_corpus_kill_switch_enabled()}")
+
+        st.divider()
+        st.markdown("**Ops Actions**")
+        ops_topic = st.text_input("Ops topic", value="Union Budget 2026", key="settings_ops_topic")
+        ops_max_pages = st.number_input("Max pages", min_value=1, max_value=120, value=60, key="settings_ops_max_pages")
+        ops_max_depth = st.number_input("Max depth", min_value=1, max_value=4, value=2, key="settings_ops_max_depth")
+
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("Run Crawl Refresh", key="settings_run_crawl_refresh"):
+                with st.spinner("Running crawl refresh..."):
+                    try:
+                        summary = run_crawl_refresh(
+                            topic=ops_topic,
+                            max_pages=int(ops_max_pages),
+                            max_depth=int(ops_max_depth),
+                        )
+                        st.session_state["settings_last_crawl_summary"] = summary
+                        st.success(f"Crawl refresh completed with status: {summary.get('status', 'unknown')}")
+                    except Exception as e:
+                        st.error(f"Crawl refresh failed: {e}")
+        with c2:
+            if st.button("Run Subset Refresh", key="settings_run_subset_refresh"):
+                with st.spinner("Running subset refresh..."):
+                    try:
+                        summary = run_subset_refresh(topics=[ops_topic])
+                        st.session_state["settings_last_subset_summary"] = summary
+                        st.success(f"Subset refresh completed with status: {summary.get('status', 'unknown')}")
+                    except Exception as e:
+                        st.error(f"Subset refresh failed: {e}")
+
+        if st.button("Refresh Freshness Metrics", key="settings_refresh_metrics"):
+            try:
+                st.session_state["settings_freshness_metrics"] = compute_freshness_metrics()
+            except Exception as e:
+                st.error(f"Failed to load freshness metrics: {e}")
+
+        metrics = st.session_state.get("settings_freshness_metrics")
+        if metrics:
+            with st.expander("Freshness Metrics", expanded=False):
+                corpus = metrics.get("corpus", {})
+                topic_subsets = metrics.get("topic_subsets", {})
+                persona_subsets = metrics.get("persona_subsets", {})
+
+                st.caption(f"Corpus article count: {corpus.get('article_count', 0)}")
+                st.caption(f"Topic stale rate: {topic_subsets.get('stale_rate', 0.0):.2%}")
+                st.caption(f"Persona stale rate: {persona_subsets.get('stale_rate', 0.0):.2%}")
+                st.json(metrics)
+
+        if st.button("Load Recent Run Summaries", key="settings_load_run_summaries"):
+            try:
+                st.session_state["settings_run_summaries"] = load_recent_run_summaries(limit=20)
+            except Exception as e:
+                st.error(f"Failed to load run summaries: {e}")
+
+        summaries = st.session_state.get("settings_run_summaries")
+        if summaries:
+            with st.expander("Recent Run Summaries", expanded=False):
+                st.json(summaries)
+
+        st.divider()
+        st.markdown("**Compliance**")
+
+        if st.button("Load Compliance Snapshots", key="settings_load_compliance_snapshots"):
+            try:
+                st.session_state["settings_compliance_snapshots"] = load_compliance_snapshots(limit=100)
+            except Exception as e:
+                st.error(f"Failed to load compliance snapshots: {e}")
+
+        if st.button("Generate Compliance Report", key="settings_generate_compliance_report"):
+            try:
+                st.session_state["settings_compliance_report"] = generate_compliance_report(limit=500, persist=False)
+            except Exception as e:
+                st.error(f"Failed to generate compliance report: {e}")
+
+        snapshots = st.session_state.get("settings_compliance_snapshots")
+        if snapshots:
+            with st.expander("Compliance Snapshots", expanded=False):
+                st.json(snapshots[-20:])
+
+        compliance_report = st.session_state.get("settings_compliance_report")
+        if compliance_report:
+            with st.expander("Compliance Report", expanded=False):
+                st.json(compliance_report)
+
 # --- Tabs ---
 tab1, tab2, tab3 = st.tabs([
     "News Navigator",
@@ -93,6 +197,18 @@ with tab1:
     st.header("Union Budget 2026 — Interactive Intelligence Briefing")
     st.markdown("*22 articles synthesised into navigable angles with interactive Q&A*")
 
+    topic = st.text_input(
+        "Briefing topic",
+        value="Union Budget 2026",
+        help="The system scans all available ET articles in the corpus and selects relevant ones for this topic before building the deep brief.",
+        key="navigator_topic",
+    )
+    enforce_topic_coverage = st.checkbox(
+        "Enforce topic coverage scan across all available ET articles",
+        value=True,
+        key="navigator_enforce_topic_coverage",
+    )
+
     # Generate briefing button
     if st.button("Generate Briefing", key="gen_briefing", type="primary"):
         with st.spinner("Running 5-agent pipeline: Ingest → Extract → Cluster → Synthesise..."):
@@ -100,9 +216,16 @@ with tab1:
                 from src.tools.article_loader import load_budget_articles
                 from src.agents.navigator.pipeline import run_navigator_pipeline
 
-                articles = load_budget_articles()
+                articles = load_budget_articles(topic=topic)
                 start = time.time()
-                result = run_async(run_navigator_pipeline(articles, "navigator"))
+                result = run_async(
+                    run_navigator_pipeline(
+                        articles,
+                        "navigator",
+                        topic=topic,
+                        enforce_topic_coverage=enforce_topic_coverage,
+                    )
+                )
                 elapsed = time.time() - start
 
                 st.session_state["briefing"] = result
@@ -117,12 +240,82 @@ with tab1:
 
         # Metrics row
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Articles Processed", "22")
+        m1.metric("Articles Scanned", result.total_articles_scanned)
         m2.metric("Angles Identified", len(result.angles))
         m3.metric("Pipeline Time", f"{st.session_state.get('briefing_time', 0):.1f}s")
-        m4.metric("Agents Used", "5")
+        m4.metric("Relevant Articles", result.relevant_articles_count)
+
+        with st.expander("Coverage Report"):
+            st.markdown(f"**Topic:** {result.topic or 'N/A'}")
+            st.markdown(f"**Coverage mode:** {result.coverage_mode}")
+            st.markdown(f"**Relevant article IDs:** {', '.join(result.relevant_article_ids)}")
+            if result.excluded_article_ids:
+                st.markdown(f"**Excluded article IDs:** {', '.join(result.excluded_article_ids)}")
+
+            inclusion_reasons = getattr(result, "inclusion_reasons", {}) or {}
+            if inclusion_reasons:
+                st.markdown("**Sample inclusion reasons:**")
+                for aid in result.relevant_article_ids[:6]:
+                    reason = inclusion_reasons.get(aid, "selected")
+                    st.caption(f"{aid}: {reason}")
+
+            exclusion_reasons = getattr(result, "exclusion_reasons", {}) or {}
+            if exclusion_reasons and result.excluded_article_ids:
+                st.markdown("**Sample exclusion reasons:**")
+                for aid in result.excluded_article_ids[:6]:
+                    reason = exclusion_reasons.get(aid, "not selected")
+                    st.caption(f"{aid}: {reason}")
 
         st.divider()
+
+        # Single deep explorable briefing document
+        if getattr(result, "deep_briefing_markdown", ""):
+            st.subheader("Deep Briefing")
+            st.markdown(result.deep_briefing_markdown)
+            st.divider()
+
+        # Entity-driven explorer
+        entity_navigation = getattr(result, "entity_navigation", {}) or {}
+        type_options = [
+            entity_type
+            for entity_type, items in entity_navigation.items()
+            if items
+        ]
+        if type_options:
+            st.subheader("Entity Explorer")
+            st.caption("How it works: pick an entity type, choose an entity, then click a related angle button to jump the angle section below.")
+
+            selected_type = st.selectbox(
+                "Entity type",
+                options=type_options,
+                key="entity_type_selector",
+            )
+            entries = entity_navigation.get(selected_type, [])
+
+            entity_labels = [
+                f"{entry['entity']} ({entry['article_count']} articles, {entry['angle_count']} angles)"
+                for entry in entries
+            ]
+
+            if entity_labels:
+                selected_label = st.selectbox(
+                    "Entity",
+                    options=entity_labels,
+                    key="entity_name_selector",
+                )
+                selected_index = entity_labels.index(selected_label)
+                selected_entry = entries[selected_index]
+
+                st.caption(f"Articles: {', '.join(selected_entry.get('article_ids', []))}")
+                st.caption("Related angles")
+                for idx, angle_name in enumerate(selected_entry.get("angles", [])):
+                    if st.button(f"Open angle: {angle_name}", key=f"entity_angle_btn_{idx}_{angle_name}"):
+                        st.session_state["angle_selector"] = angle_name
+                        st.rerun()
+
+            st.divider()
+        else:
+            st.info("Entity Explorer will populate once entity extraction finds strong links between entities and angle article clusters.")
 
         # Angle selector
         angle_names = [a.angle_name for a in result.angles]
@@ -155,6 +348,14 @@ with tab1:
         # Interactive Q&A
         st.subheader("Ask a Follow-up Question")
         st.caption("Each answer is non-overlapping — asking different questions yields genuinely different insights.")
+
+        suggested_questions = getattr(result, "suggested_questions", [])
+        if suggested_questions:
+            st.caption("Suggested questions")
+            for i, sq in enumerate(suggested_questions):
+                if st.button(sq, key=f"suggested_q_{i}"):
+                    st.session_state["nav_question"] = sq
+                    st.rerun()
 
         question = st.text_input(
             "Your question:",

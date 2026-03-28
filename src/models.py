@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-from typing import Optional
 from datetime import datetime
 
 
@@ -166,11 +165,43 @@ class AuditEntry(BaseModel):
     error_detail: str = ""
 
 
+# --- Retrieval Contract Models (Phase 3) ---
+class RetrievalFreshness(BaseModel):
+    subset_reused: bool = False
+    freshness_max_minutes: int = 120
+    subset_age_minutes: float | None = None
+    subset_updated_at: str | None = None
+
+
+class TopicRetrievalContract(BaseModel):
+    topic: str = ""
+    total_articles_scanned: int = 0
+    relevant_articles_count: int = 0
+    relevant_article_ids: list[str] = []
+    excluded_article_ids: list[str] = []
+    coverage_mode: str = "all_articles"
+    inclusion_reasons: dict[str, str] = {}
+    exclusion_reasons: dict[str, str] = {}
+    freshness: RetrievalFreshness = RetrievalFreshness()
+
+
 # --- API Response Wrappers ---
 class NavigatorBriefingResponse(BaseModel):
     briefing_id: str
+    topic: str = ""
+    total_articles_scanned: int = 0
+    relevant_articles_count: int = 0
+    relevant_article_ids: list[str] = []
+    excluded_article_ids: list[str] = []
+    coverage_mode: str = "all_articles"
+    inclusion_reasons: dict[str, str] = {}
+    exclusion_reasons: dict[str, str] = {}
+    retrieval_contract: TopicRetrievalContract | None = None
     angles: list[AngleCluster]
     syntheses: list[SynthesisEntry]
+    deep_briefing_markdown: str = ""
+    suggested_questions: list[str] = []
+    entity_navigation: dict[str, list[dict]] = {}
     entity_map: EntityMap | None = None
     audit_trail: list[AuditEntry] = []
 

@@ -117,3 +117,11 @@ def parse_json_response(text: str) -> dict | list:
         text = text[:-3]
     text = text.strip()
     return json.loads(text)
+
+
+def is_llm_unavailable_response(text: str) -> bool:
+    """Return True if text appears to be a synthetic failure message from LLM fallback chain."""
+    if not text:
+        return True
+    lowered = text.lower().strip()
+    return lowered.startswith("[llm unavailable") or "resource_exhausted" in lowered

@@ -1,0 +1,46 @@
+{
+  "topic": "Union Budget 2026",
+  "name": "topic-union-budget-2026",
+  "updated_at": "2026-03-28T19:04:23.211199+00:00",
+  "total_scanned": 22,
+  "selected_ids": [
+    "budget-001",
+    "budget-003",
+    "budget-004",
+    "budget-005",
+    "budget-007",
+    "budget-012",
+    "budget-014",
+    "budget-016",
+    "budget-017",
+    "budget-021",
+    "budget-022"
+  ],
+  "coverage_mode": "hybrid_bm25_embedding_fallback",
+  "inclusion_reasons": {
+    "budget-022": "fallback_combined_rank=4; strong_lexical=0.94; semantic_match=0.75",
+    "budget-021": "fallback_combined_rank=11; strong_lexical=0.88; semantic_match=0.70",
+    "budget-007": "fallback_combined_rank=6; strong_lexical=0.94; semantic_match=0.68",
+    "budget-017": "fallback_combined_rank=10; strong_lexical=0.99; semantic_match=0.55",
+    "budget-003": "fallback_combined_rank=5; strong_lexical=0.96; semantic_match=0.69",
+    "budget-001": "fallback_combined_rank=1; strong_lexical=1.00; semantic_match=1.00",
+    "budget-005": "fallback_combined_rank=7; strong_lexical=0.95; semantic_match=0.66",
+    "budget-012": "fallback_combined_rank=8; strong_lexical=0.88; semantic_match=0.73",
+    "budget-014": "fallback_combined_rank=9; strong_lexical=0.89; semantic_match=0.71",
+    "budget-004": "fallback_combined_rank=2; strong_lexical=0.93; semantic_match=0.88",
+    "budget-016": "fallback_combined_rank=3; strong_lexical=0.95; semantic_match=0.75"
+  },
+  "exclusion_reasons": {
+    "budget-002": "not_selected_after_rerank combined=0.7605; lexical=0.886; semantic=0.5723",
+    "budget-006": "not_selected_after_rerank combined=0.7774; lexical=0.9453; semantic=0.5255",
+    "budget-008": "not_selected_after_rerank combined=0.7516; lexical=0.8903; semantic=0.5437",
+    "budget-009": "not_selected_after_rerank combined=0.692; lexical=0.9519; semantic=0.3023",
+    "budget-010": "not_selected_after_rerank combined=0.6901; lexical=0.8346; semantic=0.4735",
+    "budget-011": "not_selected_after_rerank combined=0.6212; lexical=0.8007; semantic=0.3519",
+    "budget-013": "not_selected_after_rerank combined=0.7602; lexical=0.8577; semantic=0.614",
+    "budget-015": "not_selected_after_rerank combined=0.7833; lexical=0.8911; semantic=0.6217",
+    "budget-018": "not_selected_after_rerank combined=0.6884; lexical=0.768; semantic=0.569",
+    "budget-019": "not_selected_after_rerank combined=0.7876; lexical=0.8858; semantic=0.6404",
+    "budget-020": "not_selected_after_rerank combined=0.7614; lexical=0.8532; semantic=0.6237"
+  }
+}

@@ -1,6 +1,8 @@
 """QueryResponder agent — handles follow-up questions with non-overlapping answers."""
 
-from src.llm import call_llm, parse_json_response
+import re
+
+from src.llm import call_llm, parse_json_response, is_llm_unavailable_response
 from src.config import GEMINI_PRO
 from src.audit import log_agent_step, AuditTimer
 from src.models import SynthesisEntry, Article, QueryResponse
@@ -94,12 +96,10 @@ Answer the user's question. Return JSON:
             data = parse_json_response(response)
             result = QueryResponse(**data)
         except Exception:
-            result = QueryResponse(
-                answer=response if response else "[Could not generate answer. Please try rephrasing your question.]",
-                sources=[],
-                angle="general",
-                is_non_overlapping=True,
-            )
+            result = _deterministic_query_answer(question, syntheses, articles)
+
+        if is_llm_unavailable_response(result.answer):
+            result = _deterministic_query_answer(question, syntheses, articles)
 
         # Update history
         if session_id not in _query_history:
@@ -120,3 +120,70 @@ Answer the user's question. Return JSON:
     )
 
     return result
+
+
+def _deterministic_query_answer(
+    question: str,
+    syntheses: list[SynthesisEntry],
+    articles: list[Article],
+) -> QueryResponse:
+    q_tokens = _tokens(question)
+
+    angle_scores: list[tuple[int, str]] = []
+    for s in syntheses:
+        hay = f"{s.angle_name} {s.synthesis} {' '.join(s.key_takeaways)}".lower()
+        score = sum(1 for t in q_tokens if t in hay)
+        angle_scores.append((score, s.angle_name))
+
+    angle_scores.sort(key=lambda x: x[0], reverse=True)
+    best_angle = angle_scores[0][1] if angle_scores else "general"
+
+    article_scored: list[tuple[int, Article]] = []
+    for article in articles:
+        hay = f"{article.title} {article.content}".lower()
+        score = sum(1 for t in q_tokens if t in hay)
+        if score > 0:
+            article_scored.append((score, article))
+
+    article_scored.sort(key=lambda x: x[0], reverse=True)
+    selected_articles = [a for _, a in article_scored[:3]]
+    if not selected_articles:
+        selected_articles = articles[:2]
+
+    evidence_lines = []
+    for article in selected_articles:
+        sent = _best_sentence_for_question(article.content, q_tokens)
+        evidence_lines.append(f"{sent} [{article.id}]")
+
+    answer = (
+        f"Based on the available ET coverage, the most relevant lens is {best_angle}. "
+        + " ".join(evidence_lines)
+        + " Overall, the key implication depends on execution timelines, market absorption, and policy follow-through."
+    )
+
+    return QueryResponse(
+        answer=answer,
+        sources=[a.id for a in selected_articles],
+        angle=best_angle,
+        is_non_overlapping=True,
+    )
+
+
+def _tokens(text: str) -> list[str]:
+    return [t for t in re.findall(r"[a-z0-9]+", text.lower()) if len(t) >= 3]
+
+
+def _best_sentence_for_question(content: str, q_tokens: list[str]) -> str:
+    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", content) if s.strip()]
+    if not sentences:
+        return content[:180]
+    scored = []
+    for s in sentences:
+        lowered = s.lower()
+        score = sum(1 for t in q_tokens if t in lowered)
+        if re.search(r"\b\d+(?:\.\d+)?\b", s):
+            score += 1
+        scored.append((score, s))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    best = scored[0][1]
+    return best[:220] + ("..." if len(best) > 220 else "")

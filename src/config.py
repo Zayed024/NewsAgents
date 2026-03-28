@@ -175,3 +175,16 @@ def get_font_path_for_language(language: str | None = None) -> str:
 # --- Agent Config ---
 MAX_RETRIES = 1
 REQUEST_TIMEOUT = 30
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    value = str(raw).strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+def is_retrieval_contracts_enabled() -> bool:
+    """Feature flag for gradual rollout of typed retrieval contracts."""
+    return _env_bool("RETRIEVAL_CONTRACTS_ENABLED", default=True)

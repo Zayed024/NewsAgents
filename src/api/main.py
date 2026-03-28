@@ -23,6 +23,13 @@ from src.agents.persona_feed.pipeline import run_feed_comparison
 from src.agents.video.pipeline import run_video_pipeline
 from src.model_router import get_routing_summary
 from src.config import OUTPUT_DIR
+from src.tools.corpus.operations import (
+    compute_freshness_metrics,
+    load_recent_run_summaries,
+    run_crawl_refresh,
+    run_subset_refresh,
+)
+from src.tools.corpus.compliance import generate_compliance_report, load_compliance_snapshots
 
 app = FastAPI(
     title="ET AI News Navigator",
@@ -50,6 +57,8 @@ async def health():
 
 class BriefingRequest(BaseModel):
     article_source: str = "budget"  # "budget" loads the 22 budget articles
+    topic: str = "Union Budget 2026"
+    enforce_topic_coverage: bool = True
 
 
 class QueryRequest(BaseModel):
@@ -61,8 +70,13 @@ class QueryRequest(BaseModel):
 async def create_briefing(request: BriefingRequest):
     """Run the full News Navigator pipeline on budget articles."""
     try:
-        articles = load_budget_articles()
-        result = await run_navigator_pipeline(articles, session_id="navigator")
+        articles = load_budget_articles(topic=request.topic)
+        result = await run_navigator_pipeline(
+            articles,
+            session_id="navigator",
+            topic=request.topic,
+            enforce_topic_coverage=request.enforce_topic_coverage,
+        )
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -151,6 +165,81 @@ async def list_articles(source: str = "budget"):
     else:
         articles = []
     return {"count": len(articles), "articles": [a.model_dump() for a in articles]}
+
+
+# --- Operations / Freshness (Phase 4) ---
+
+class CrawlRefreshRequest(BaseModel):
+    topic: str = "Union Budget 2026"
+    max_pages: int = 60
+    max_depth: int = 2
+    bootstrap_if_empty: bool = True
+
+
+class SubsetRefreshRequest(BaseModel):
+    topics: list[str] = ["Union Budget 2026"]
+    profile_names: list[str] = ["cfo_profile", "young_investor_profile"]
+    max_items: int = 40
+
+
+@app.post("/api/v1/ops/crawl-refresh")
+async def ops_crawl_refresh(request: CrawlRefreshRequest):
+    try:
+        return run_crawl_refresh(
+            topic=request.topic,
+            max_pages=request.max_pages,
+            max_depth=request.max_depth,
+            bootstrap_if_empty=request.bootstrap_if_empty,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/ops/subset-refresh")
+async def ops_subset_refresh(request: SubsetRefreshRequest):
+    try:
+        return run_subset_refresh(
+            topics=request.topics,
+            profile_names=request.profile_names,
+            max_items=request.max_items,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/ops/freshness-metrics")
+async def ops_freshness_metrics(topic_stale_after_minutes: int = 120, persona_stale_after_minutes: int = 180):
+    try:
+        return compute_freshness_metrics(
+            topic_stale_after_minutes=topic_stale_after_minutes,
+            persona_stale_after_minutes=persona_stale_after_minutes,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/ops/run-summaries")
+async def ops_run_summaries(limit: int = 20):
+    try:
+        return {"summaries": load_recent_run_summaries(limit=limit)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/ops/compliance/snapshots")
+async def ops_compliance_snapshots(limit: int = 100):
+    try:
+        return {"snapshots": load_compliance_snapshots(limit=limit)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/ops/compliance/report")
+async def ops_compliance_report(limit: int = 500, persist: bool = True):
+    try:
+        return generate_compliance_report(limit=limit, persist=persist)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
