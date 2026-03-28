@@ -279,8 +279,26 @@ with tab2:
 # TAB 3: VERNACULAR VIDEO
 # ============================================================
 with tab3:
-    st.header("Breaking News → Hindi Video in <60 Seconds")
-    st.markdown("*5-agent pipeline: Ingest → Script → Fact-check → Audio → Video*")
+    st.header("Breaking News → Vernacular Video")
+    st.markdown("*5-agent pipeline: Ingest → Script → Fact-check → Audio → Video (language selectable)*")
+
+    # Requested Indian languages in alphabetical order.
+    language_options = {
+        "Bhojpuri": "bho",
+        "Hindi": "hi",
+        "Kannada": "kn",
+        "Marathi": "mr",
+        "Punjabi": "pa",
+        "Tamil": "ta",
+        "Telugu": "te",
+    }
+    selected_language_label = st.selectbox(
+        "Video language",
+        options=list(language_options.keys()),
+        index=0,
+        key="video_language",
+    )
+    selected_language = language_options[selected_language_label]
 
     # Show source article
     with st.expander("Source Article (Breaking News)", expanded=False):
@@ -293,7 +311,7 @@ with tab3:
         except Exception as e:
             st.warning(f"Could not load article: {e}")
 
-    if st.button("Generate Hindi Video", key="gen_video", type="primary"):
+    if st.button("Generate Video", key="gen_video", type="primary"):
         progress = st.progress(0, text="Starting pipeline...")
 
         try:
@@ -305,7 +323,13 @@ with tab3:
 
             # Run pipeline with progress updates
             progress.progress(10, text="Extracting key facts...")
-            result = run_async(run_video_pipeline(article, "video"))
+            result = run_async(
+                run_video_pipeline(
+                    article,
+                    target_language=selected_language,
+                    session_id="video",
+                )
+            )
             elapsed = time.time() - start
 
             progress.progress(100, text=f"Complete! {elapsed:.1f} seconds")
@@ -337,7 +361,7 @@ with tab3:
         col_script, col_facts = st.columns(2)
 
         with col_script:
-            st.subheader("Hindi Script")
+            st.subheader("Generated Script")
             if result.script:
                 st.markdown(result.script.script_hindi)
                 st.divider()
@@ -357,6 +381,26 @@ with tab3:
 
                 if result.fact_check.flagged_claims:
                     st.warning("Flagged claims: " + ", ".join(result.fact_check.flagged_claims))
+
+        if result.scene_plan and result.scene_plan.scenes:
+            with st.expander(f"Story Chapters ({len(result.scene_plan.scenes)})", expanded=True):
+                if result.scene_plan.story_arc_summary:
+                    st.info(f"Story arc: {result.scene_plan.story_arc_summary}")
+                if result.scene_plan.key_players:
+                    st.caption("Key players: " + ", ".join(result.scene_plan.key_players))
+                if result.scene_plan.sentiment_shifts:
+                    st.caption("Sentiment shifts: " + " -> ".join(result.scene_plan.sentiment_shifts))
+                if result.scene_plan.contrarian_perspective:
+                    st.caption("Contrarian perspective: " + result.scene_plan.contrarian_perspective)
+                if result.scene_plan.watch_next:
+                    st.caption("What to watch next: " + ", ".join(result.scene_plan.watch_next))
+
+                for idx, scene in enumerate(result.scene_plan.scenes, start=1):
+                    st.markdown(
+                        f"**{idx}. {scene.chapter} - {scene.heading}** "
+                        f"({scene.duration_seconds}s, {scene.scene_type})"
+                    )
+                    st.caption(scene.text)
 
         # Video player
         if result.video_path and os.path.exists(result.video_path):

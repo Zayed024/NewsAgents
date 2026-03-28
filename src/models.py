@@ -109,6 +109,27 @@ class VideoScript(BaseModel):
     analogies_used: list[str] = []
 
 
+class VideoScene(BaseModel):
+    chapter: str
+    heading: str
+    text: str
+    narration_text: str = ""
+    visual_hint: str = ""
+    sentiment: str = "neutral"
+    duration_seconds: int
+    scene_type: str = "narrative"  # narrative, numbers, impact, timeline, closing
+
+
+class VideoScenePlan(BaseModel):
+    target_duration_seconds: int
+    scenes: list[VideoScene] = []
+    story_arc_summary: str = ""
+    key_players: list[str] = []
+    sentiment_shifts: list[str] = []
+    contrarian_perspective: str = ""
+    watch_next: list[str] = []
+
+
 class FactCheckClaim(BaseModel):
     claim: str
     source_match: bool
@@ -125,6 +146,7 @@ class VideoResult(BaseModel):
     video_path: str = ""
     script: VideoScript | None = None
     fact_check: FactCheckReport | None = None
+    scene_plan: VideoScenePlan | None = None
     generation_time_seconds: float = 0.0
     audio_path: str = ""
     status: str = "success"  # success, degraded, failed
@@ -171,5 +193,6 @@ class VideoGenerateResponse(BaseModel):
     video_path: str
     script: VideoScript | None = None
     fact_check: FactCheckReport | None = None
+    scene_plan: VideoScenePlan | None = None
     generation_time_seconds: float
     audit_trail: list[AuditEntry] = []

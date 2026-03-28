@@ -107,15 +107,21 @@ class VideoRequest(BaseModel):
 
 @app.post("/api/v1/video/generate")
 async def generate_video(request: VideoRequest):
-    """Generate Hindi explainer video from breaking news."""
+    """Generate explainer video from breaking news in requested language."""
     try:
         article = load_breaking_news()
-        result = await run_video_pipeline(article, session_id="video")
+        result = await run_video_pipeline(
+            article,
+            target_language=request.target_language,
+            session_id="video",
+        )
         return {
             "video_path": result.video_path,
             "video_url": f"/output/{os.path.basename(result.video_path)}" if result.video_path else "",
+            "target_language": request.target_language,
             "script": result.script.model_dump() if result.script else None,
             "fact_check": result.fact_check.model_dump() if result.fact_check else None,
+            "scene_plan": result.scene_plan.model_dump() if result.scene_plan else None,
             "generation_time_seconds": result.generation_time_seconds,
             "status": result.status,
             "audit_trail": [e.model_dump() for e in get_audit_trail("video")],

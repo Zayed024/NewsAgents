@@ -1,44 +1,159 @@
-"""ScriptWriter agent — generates Hindi explainer script from extracted facts."""
+"""ScriptWriter agent — generates explainer scripts from extracted facts."""
+
+import re
 
 from src.llm import call_llm, parse_json_response
-from src.config import GEMINI_PRO
+from src.config import GEMINI_PRO, get_video_language_profile
 from src.audit import log_agent_step, AuditTimer
 from src.models import VideoScript
 
 
-SYSTEM_INSTRUCTION = """आप Economic Times के लिए हिंदी न्यूज़ एक्सप्लेनर स्क्रिप्ट लिखने वाले विशेषज्ञ हैं।
+SYSTEM_INSTRUCTION = """You are an Economic Times explainer script specialist.
 
-You write Hindi news explainer scripts for semi-urban retail investors with NO financial background.
+You write business-news scripts for retail audiences with little financial background.
 
 STRICT RULES:
-1. Write ENTIRELY in Hindi (Devanagari script). NO English words except proper nouns (company names, "NCLT").
-2. Replace ALL English financial jargon with Hindi equivalents + everyday analogies:
-   - "Bankruptcy" → "दिवालिया — जैसे कोई दुकानदार अपना कर्ज़ न चुका पाए और अदालत में जाए"
-   - "Debt" → "कर्ज़"
-   - "Creditors" → "कर्ज़दाता (जिन्होंने पैसा उधार दिया)"
-   - "Resolution Professional" → "समाधान पेशेवर (जो कंपनी की संपत्ति बेचकर कर्ज़ चुकाने का रास्ता निकालेगा)"
-   - "Assets" → "संपत्ति"
-   - "Liabilities" → "देनदारी"
-3. Use relatable comparisons for large numbers:
-   - "47,000 करोड़ — यानी लगभग 60 लाख भारतीय परिवारों की सालाना आमदनी के बराबर"
-4. Keep the script 150-200 words (60-90 seconds when spoken)
-5. Structure: Hook → What happened → Key numbers → Who is affected → What it means for you → Closing
-6. End with "आपके लिए इसका क्या मतलब है" section
-7. Tone: Calm, informative, trustworthy — NOT sensationalist"""
+1. Keep the script 160-240 words (target 75-110 seconds when spoken).
+2. Structure: Hook -> What happened -> Key numbers -> Who is affected -> What it means for you -> Closing.
+3. Keep tone calm, informative, and trustworthy.
+4. Use only facts present in the provided source facts.
+5. Explain complex financial terms using simple analogies.
+6. Avoid sensationalism or speculation.
+"""
 
 
-async def write_hindi_script(facts: dict, session_id: str = "default") -> VideoScript:
-    """Generate a Hindi explainer script from extracted facts.
+def _language_prompt(language: str) -> str:
+    profile = get_video_language_profile(language)
+    return profile.get(
+        "writing_hint",
+        "Write in the requested language and avoid English except proper nouns.",
+    )
+
+
+def _fallback_script(facts: dict, language: str) -> VideoScript:
+    lang = (language or "hi").lower()
+    what = facts.get("what", "एक बड़ी कंपनी ने दिवालिया प्रक्रिया शुरू की है।")
+
+    def english_token_count(text: str) -> int:
+        return len(re.findall(r"[A-Za-z]{3,}", text or ""))
+
+    if lang != "en" and english_token_count(what) > 4:
+        localized_what = {
+            "hi": "एक बड़ी इंफ्रास्ट्रक्चर कंपनी ने दिवालिया प्रक्रिया शुरू की है।",
+            "mr": "एका मोठ्या इन्फ्रास्ट्रक्चर कंपनीने दिवाळखोरी प्रक्रिया सुरू केली आहे.",
+            "bho": "एक बड़ इंफ्रास्ट्रक्चर कंपनी दिवालिया प्रक्रिया में गइल बा.",
+            "ta": "ஒரு பெரிய உள்கட்டமைப்பு நிறுவனம் திவால் செயல்முறையை தொடங்கியுள்ளது.",
+            "te": "ఒక పెద్ద మౌలిక వసతుల సంస్థ దివాలా ప్రక్రియను ప్రారంభించింది.",
+            "kn": "ಒಂದು ದೊಡ್ಡ ಮೂಲಸೌಕರ್ಯ ಕಂಪನಿ ದಿವಾಳಿತನ ಪ್ರಕ್ರಿಯೆಯನ್ನು ಆರಂಭಿಸಿದೆ.",
+            "pa": "ਇੱਕ ਵੱਡੀ ਢਾਂਚਾਗਤ ਕੰਪਨੀ ਨੇ ਦਿਵਾਲੀਆ ਪ੍ਰਕਿਰਿਆ ਸ਼ੁਰੂ ਕੀਤੀ ਹੈ।",
+        }
+        what = localized_what.get(lang, localized_what["hi"])
+    if lang == "en":
+        script_text = (
+            "Hello and welcome. Today's big business update: "
+            f"{what} "
+            "This development matters because it can impact banks, investors, employees, and ongoing projects. "
+            "Key stakeholders are now watching the legal process, creditor decisions, and project continuity. "
+            "For retail investors, the main takeaway is to track debt levels, cash-flow stability, and sector-wide spillover risk before making decisions. "
+            "What to watch next: creditor committee actions, resolution milestones, and market reaction in related stocks."
+        )
+        transliteration = script_text
+    elif lang == "mr":
+        script_text = (
+            "नमस्कार. आजच्या मोठ्या व्यावसायिक बातमीत "
+            f"{what} "
+            "याचा परिणाम बँका, गुंतवणूकदार, कर्मचारी आणि सुरू असलेल्या प्रकल्पांवर होऊ शकतो. "
+            "पुढील टप्प्यात कर्जदार समितीचे निर्णय, कायदेशीर प्रक्रियेची गती आणि प्रकल्पांची सातत्यपूर्ण अंमलबजावणी महत्त्वाची असेल. "
+            "आपल्यासाठी याचा अर्थ असा की गुंतवणुकीपूर्वी कर्जाचे प्रमाण, रोख प्रवाह आणि क्षेत्रीय जोखीम नक्की तपासा."
+        )
+        transliteration = "Namaskar..."
+    elif lang == "bho":
+        script_text = (
+            "नमस्कार. आज के बड़ व्यवसायिक खबर में "
+            f"{what} "
+            "एहसे बैंक, निवेशक, कर्मचारी आ चल रहल परियोजनन पर असर पड़ सकत बा. "
+            "आगे के चरण में कर्जदाता समिति के फैसला, कानूनी प्रक्रिया के रफ्तार आ परियोजना के प्रगति पर नजर जरूरी बा. "
+            "रउरा खातिर मतलब ई बा कि निवेश से पहिले कर्ज, नकदी स्थिति आ सेक्टर के जोखिम जरूर जांचीं."
+        )
+        transliteration = "Namaskar..."
+    elif lang == "ta":
+        script_text = (
+            "வணக்கம். இன்றைய முக்கிய வர்த்தகச் செய்தியில் "
+            f"{what} "
+            "இதன் தாக்கம் வங்கிகள், முதலீட்டாளர்கள், ஊழியர்கள் மற்றும் நடைபெற்று வரும் திட்டங்கள் மீது இருக்கலாம். "
+            "அடுத்த கட்டத்தில் கடனளிப்போர் குழு முடிவுகள், சட்ட செயல்முறை வேகம் மற்றும் திட்ட முன்னேற்றம் கவனிக்க வேண்டிய முக்கிய சுட்டிகள். "
+            "உங்களுக்கான முக்கிய பொருள்: முதலீட்டுக்கு முன் கடன் நிலை, பணப்புழக்கம் மற்றும் துறை ஆபத்தை கண்டிப்பாக மதிப்பிடுங்கள்."
+        )
+        transliteration = "Vanakkam..."
+    elif lang == "te":
+        script_text = (
+            "నమస్కారం. ఈరోజు ప్రధాన వ్యాపార వార్తలో "
+            f"{what} "
+            "దీని ప్రభావం బ్యాంకులు, పెట్టుబడిదారులు, ఉద్యోగులు మరియు కొనసాగుతున్న ప్రాజెక్టులపై పడవచ్చు. "
+            "తదుపరి దశలో రుణదాతల కమిటీ నిర్ణయాలు, చట్టపరమైన ప్రక్రియ వేగం, ప్రాజెక్టుల పురోగతి కీలకంగా ఉంటుంది. "
+            "మీ కోసం ముఖ్య అర్థం: పెట్టుబడి నిర్ణయానికి ముందు రుణ స్థాయి, నగదు ప్రవాహం, రంగ ప్రమాదాన్ని తప్పనిసరిగా పరిశీలించండి."
+        )
+        transliteration = "Namaskaram..."
+    elif lang == "kn":
+        script_text = (
+            "ನಮಸ್ಕಾರ. ಇಂದಿನ ಪ್ರಮುಖ ವ್ಯವಹಾರ ಸುದ್ದಿಯಲ್ಲಿ "
+            f"{what} "
+            "ಇದರ ಪರಿಣಾಮ ಬ್ಯಾಂಕುಗಳು, ಹೂಡಿಕೆದಾರರು, ನೌಕರರು ಮತ್ತು ನಡೆಯುತ್ತಿರುವ ಯೋಜನೆಗಳ ಮೇಲೆ ಬೀಳಬಹುದು. "
+            "ಮುಂದಿನ ಹಂತದಲ್ಲಿ ಸಾಲದಾರರ ಸಮಿತಿ ನಿರ್ಧಾರಗಳು, ಕಾನೂನು ಪ್ರಕ್ರಿಯೆಯ ವೇಗ ಮತ್ತು ಯೋಜನೆಗಳ ಪ್ರಗತಿ ಗಮನಿಸಬೇಕಾದ ಮುಖ್ಯ ಸೂಚನೆಗಳು. "
+            "ನಿಮಗಾಗಿ ಮುಖ್ಯ ಅರ್ಥ: ಹೂಡಿಕೆಗೂ ಮೊದಲು ಸಾಲದ ಮಟ್ಟ, ನಗದು ಹರಿವು ಮತ್ತು ಕ್ಷೇತ್ರದ ಅಪಾಯವನ್ನು ಪರಿಶೀಲಿಸಿ."
+        )
+        transliteration = "Namaskara..."
+    elif lang == "pa":
+        script_text = (
+            "ਸਤ ਸ੍ਰੀ ਅਕਾਲ। ਅੱਜ ਦੀ ਵੱਡੀ ਕਾਰੋਬਾਰੀ ਖ਼ਬਰ ਵਿੱਚ "
+            f"{what} "
+            "ਇਸ ਦਾ ਅਸਰ ਬੈਂਕਾਂ, ਨਿਵੇਸ਼ਕਾਂ, ਕਰਮਚਾਰੀਆਂ ਅਤੇ ਚੱਲ ਰਹੇ ਪ੍ਰੋਜੈਕਟਾਂ 'ਤੇ ਪੈ ਸਕਦਾ ਹੈ। "
+            "ਅਗਲੇ ਪੜਾਅ ਵਿੱਚ ਕਰਜ਼ਦਾਰ ਕਮੇਟੀ ਦੇ ਫ਼ੈਸਲੇ, ਕਾਨੂੰਨੀ ਪ੍ਰਕਿਰਿਆ ਦੀ ਰਫ਼ਤਾਰ ਅਤੇ ਪ੍ਰੋਜੈਕਟ ਤਰੱਕੀ ਮਹੱਤਵਪੂਰਣ ਰਹੇਗੀ। "
+            "ਤੁਹਾਡੇ ਲਈ ਮਤਲਬ: ਨਿਵੇਸ਼ ਤੋਂ ਪਹਿਲਾਂ ਕਰਜ਼ਾ ਪੱਧਰ, ਨਕਦੀ ਪ੍ਰਵਾਹ ਅਤੇ ਸੈਕਟਰ ਜੋਖ਼ਮ ਜ਼ਰੂਰ ਵੇਖੋ।"
+        )
+        transliteration = "Sat sri akaal..."
+    else:
+        script_text = (
+            "नमस्कार। आज की बड़ी कारोबारी खबर में "
+            f"{what} "
+            "इसका असर बैंकों, निवेशकों, कर्मचारियों और चल रही परियोजनाओं पर पड़ सकता है। "
+            "अब सबसे महत्वपूर्ण बात यह है कि कानूनी प्रक्रिया कितनी तेज़ चलती है, कर्ज़दाताओं के फैसले क्या आते हैं, और परियोजनाएं समय पर पूरी हो पाती हैं या नहीं। "
+            "आपके लिए इसका मतलब है कि निवेश से पहले कंपनी का कर्ज़, नकदी स्थिति और सेक्टर पर असर ज़रूर देखें। "
+            "आगे क्या देखना है: कर्ज़दाता समिति की बैठक, समाधान प्रक्रिया की प्रगति, और संबंधित शेयरों की चाल।"
+        )
+        transliteration = "Namaskaar..."
+
+    return VideoScript(
+        script_hindi=script_text,
+        script_transliteration=transliteration,
+        estimated_duration_seconds=80,
+        key_facts_used=[facts.get("what", "")],
+        analogies_used=["Debt stress is like household income falling while loan EMIs stay high."],
+    )
+
+
+async def write_script(
+    facts: dict,
+    language: str = "hi",
+    target_duration_seconds: int = 90,
+    session_id: str = "default",
+) -> VideoScript:
+    """Generate a language-aware explainer script from extracted facts.
 
     Args:
         facts: Structured facts from BreakingIngestor
+        language: Target language code (hi/en)
+        target_duration_seconds: Desired duration for narration
         session_id: Session ID for audit
 
     Returns:
-        VideoScript with Hindi text and metadata
+        VideoScript with script text and metadata
     """
     with AuditTimer() as timer:
-        prompt = f"""Write a Hindi explainer script (60-90 seconds, 150-200 words in Devanagari) for this breaking news:
+        prompt = f"""Write an explainer script ({target_duration_seconds - 15}-{target_duration_seconds + 20} seconds, 160-240 words) for this breaking news.
+
+LANGUAGE RULE:
+{_language_prompt(language)}
 
 FACTS:
 - What: {facts.get('what', '')}
@@ -55,9 +170,9 @@ IMPACT:
 
 Return JSON:
 {{
-  "script_hindi": "Full Hindi script in Devanagari...",
-  "script_transliteration": "Transliteration in Roman script for reference...",
-  "estimated_duration_seconds": 75,
+    "script_hindi": "Full script in requested language...",
+    "script_transliteration": "Roman transliteration (or same text for English)...",
+    "estimated_duration_seconds": {target_duration_seconds},
   "key_facts_used": ["fact1 from article", "fact2 from article"],
   "analogies_used": ["analogy1 explaining a financial concept", "analogy2"]
 }}"""
@@ -74,26 +189,28 @@ Return JSON:
             data = parse_json_response(response)
             result = VideoScript(**data)
         except Exception:
-            # Fallback: create a basic script
-            result = VideoScript(
-                script_hindi="नमस्कार दोस्तों। आज एक बड़ी खबर आई है। "
-                            + facts.get("what", "एक बड़ी कंपनी ने दिवालिया होने की अर्ज़ी दायर की है।")
-                            + " इसका असर बैंकिंग सेक्टर और शेयर बाज़ार पर पड़ सकता है।"
-                            + " अधिक जानकारी के लिए Economic Times पढ़ते रहिए।",
-                script_transliteration="Namaskaar doston...",
-                estimated_duration_seconds=30,
-                key_facts_used=[facts.get("what", "")],
-                analogies_used=[],
-            )
+            result = _fallback_script(facts, language)
+
+    # Guardrail: If script is unexpectedly short, replace with robust fallback.
+    if len(result.script_hindi.strip()) < 280 or result.estimated_duration_seconds < 70:
+        result = _fallback_script(facts, language)
 
     log_agent_step(
         agent_name="ScriptWriter",
-        action="write_hindi_script",
+        action="write_script",
         model_used=GEMINI_PRO,
         input_summary=f"Facts: {facts.get('what', '')[:80]}",
-        output_summary=f"Script: {len(result.script_hindi)} chars, ~{result.estimated_duration_seconds}s",
+        output_summary=(
+            f"Lang: {language}, Script: {len(result.script_hindi)} chars, "
+            f"~{result.estimated_duration_seconds}s"
+        ),
         latency_ms=timer.elapsed_ms,
         session_id=session_id,
     )
 
     return result
+
+
+async def write_hindi_script(facts: dict, session_id: str = "default") -> VideoScript:
+    """Backward-compatible wrapper for existing call sites."""
+    return await write_script(facts=facts, language="hi", target_duration_seconds=90, session_id=session_id)
