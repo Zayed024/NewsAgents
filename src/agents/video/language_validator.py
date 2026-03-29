@@ -9,6 +9,7 @@ from src.llm import call_llm, parse_json_response
 from src.config import get_video_language_profile
 from src.audit import log_agent_step, AuditTimer
 from src.models import VideoScript, VideoScenePlan, VideoScene
+from src.agents.video.localized_event import is_english_heavy, localize_event_text
 
 
 SYSTEM_INSTRUCTION = """You are a strict language quality checker for multilingual news videos.
@@ -66,6 +67,9 @@ def _deterministic_cleanup(text: str, target_language: str) -> str:
         return cleaned
 
     lang = (target_language or "").lower()
+    if lang != "en" and is_english_heavy(cleaned):
+        return localize_event_text(cleaned, lang)
+
     if lang in {"hi", "mr", "bho"}:
         # Remove obvious model error payloads and keep a readable fallback.
         if _is_model_error_text(cleaned):

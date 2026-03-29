@@ -508,10 +508,28 @@ with tab1:
     st.header("Union Budget 2026 — Interactive Intelligence Briefing")
     st.markdown("*22 articles synthesised into navigable angles with interactive Q&A*")
 
+    navigator_source_options = {
+        "Budget demo corpus (22 curated budget articles)": "budget",
+        "Homepage corpus (latest mixed-category stories)": "homepage",
+    }
+    navigator_source_label = st.selectbox(
+        "Navigator article source",
+        options=list(navigator_source_options.keys()),
+        key="navigator_source_label",
+    )
+    navigator_source = navigator_source_options[navigator_source_label]
+
     topic = st.text_input(
         "Briefing topic",
         value="Union Budget 2026",
         key="navigator_topic",
+    )
+    navigator_max_items = st.slider(
+        "Articles to include",
+        min_value=5,
+        max_value=50,
+        value=22,
+        key="navigator_max_items",
     )
     enforce_topic_coverage = st.checkbox(
         "Enforce topic coverage scan across available corpus articles",
@@ -523,10 +541,13 @@ with tab1:
     if st.button("Generate Briefing", key="gen_briefing", type="primary"):
         with st.spinner("Running 5-agent pipeline: Ingest → Extract → Cluster → Synthesise..."):
             try:
-                from src.tools.article_loader import load_budget_articles
+                from src.tools.article_loader import load_budget_articles, load_homepage_articles
                 from src.agents.navigator.pipeline import run_navigator_pipeline
 
-                articles = load_budget_articles(topic=topic)
+                if navigator_source == "homepage":
+                    articles = load_homepage_articles(max_items=navigator_max_items)
+                else:
+                    articles = load_budget_articles(topic=topic, max_items=navigator_max_items)
                 start = time.time()
                 result = run_async(
                     run_navigator_pipeline(
@@ -540,6 +561,7 @@ with tab1:
 
                 st.session_state["briefing"] = result
                 st.session_state["briefing_time"] = elapsed
+                st.session_state["navigator_article_count"] = len(articles)
                 st.success(f"Briefing generated in {elapsed:.1f}s — {len(result.angles)} angles, {len(result.syntheses)} syntheses")
             except Exception as e:
                 st.error(f"Pipeline error: {e}")
@@ -554,7 +576,7 @@ with tab1:
         cost = get_session_cost_summary("navigator")
 
         m1, m2, m3, m4, m5 = st.columns(5)
-        m1.metric("Articles Processed", "22")
+        m1.metric("Articles Processed", st.session_state.get("navigator_article_count", "-"))
         m2.metric("Angles Identified", len(result.angles))
         m3.metric("Pipeline Time", f"{st.session_state.get('briefing_time', 0):.1f}s")
         m4.metric("Agents Used", "7")
@@ -693,17 +715,29 @@ with tab1:
         st.subheader("Ask a Follow-up Question")
         st.caption("Each answer is non-overlapping — asking different questions yields genuinely different insights.")
 
+        suggested_questions = [q for q in (getattr(result, "suggested_questions", []) or []) if q]
+        suggested_question_to_run = ""
+        if suggested_questions:
+            st.markdown("**Suggested follow-up questions**")
+            for idx, suggested_q in enumerate(suggested_questions[:6], start=1):
+                if st.button(suggested_q, key=f"nav_suggested_q_{idx}", use_container_width=True):
+                    st.session_state["nav_question"] = suggested_q
+                    suggested_question_to_run = suggested_q
+
         question = st.text_input(
             "Your question:",
             placeholder="e.g., What does this mean for IT stocks?",
             key="nav_question",
         )
 
-        if st.button("Ask", key="ask_btn") and question:
+        run_manual_question = st.button("Ask", key="ask_btn")
+        question_to_run = suggested_question_to_run or (question if run_manual_question else "")
+
+        if question_to_run:
             with st.spinner("QueryResponder agent processing..."):
                 try:
                     from src.agents.navigator.pipeline import handle_query
-                    qr = run_async(handle_query(question, "navigator"))
+                    qr = run_async(handle_query(question_to_run, "navigator"))
                     st.markdown(f"**Answer** (Angle: {qr.angle})")
                     st.markdown(qr.answer)
                     if qr.sources:
@@ -1435,15 +1469,41 @@ with tab4:
     )
     selected_language = language_options[selected_language_label]
 
-    # Show source article
-    with st.expander("Source Article (Breaking News)", expanded=False):
-        try:
-            from src.tools.article_loader import load_breaking_news
-            article = load_breaking_news()
-            st.markdown(f"**{article.title}**")
-            st.markdown(article.content)
-            st.caption(f"Source: {article.author} | {article.published_at}")
-        except Exception as e:
+    selected_breaking_article_id = None
+    selected_breaking_article = None
+
+    try:
+        from src.tools.article_loader import load_breaking_news_articles
+
+        breaking_articles = load_breaking_news_articles(max_items=20)
+        if breaking_articles:
+            article_options = {
+                f"{a.title[:90]}{'...' if len(a.title) > 90 else ''} ({a.published_at[:10]})": a.id
+                for a in breaking_articles
+            }
+            selected_label = st.selectbox(
+                "Breaking news source",
+                options=list(article_options.keys()),
+                key="video_breaking_article",
+            )
+            selected_breaking_article_id = article_options[selected_label]
+            selected_breaking_article = next(
+                (a for a in breaking_articles if a.id == selected_breaking_article_id),
+                breaking_articles[0],
+            )
+
+        # Show source article
+        with st.expander("Source Article (Breaking News)", expanded=False):
+            if selected_breaking_article:
+                st.markdown(f"**{selected_breaking_article.title}**")
+                st.markdown(selected_breaking_article.content)
+                st.caption(
+                    f"Source: {selected_breaking_article.author} | {selected_breaking_article.published_at}"
+                )
+            else:
+                st.warning("No breaking news articles found.")
+    except Exception as e:
+        with st.expander("Source Article (Breaking News)", expanded=False):
             st.warning(f"Could not load article: {e}")
 
     if st.button("Generate Video", key="gen_video", type="primary"):
@@ -1453,7 +1513,8 @@ with tab4:
             from src.tools.article_loader import load_breaking_news
             from src.agents.video.pipeline import run_video_pipeline
 
-            article = load_breaking_news()
+            article = load_breaking_news(article_id=selected_breaking_article_id)
+            video_session_id = f"video-{article.id}-{selected_language}-{int(time.time() * 1000)}"
             start = time.time()
 
             # Run pipeline with progress updates
@@ -1462,7 +1523,7 @@ with tab4:
                 run_video_pipeline(
                     article,
                     target_language=selected_language,
-                    session_id="video",
+                    session_id=video_session_id,
                 )
             )
             elapsed = time.time() - start
@@ -1471,6 +1532,9 @@ with tab4:
 
             st.session_state["video_result"] = result
             st.session_state["video_time"] = elapsed
+            st.session_state["video_session_id"] = video_session_id
+            st.session_state["video_source_title"] = article.title
+            st.session_state["video_source_id"] = article.id
 
             if result.status == "success":
                 st.success(f"Video generated in {elapsed:.1f} seconds (target: <60s)")
@@ -1485,6 +1549,11 @@ with tab4:
 
     if "video_result" in st.session_state:
         result = st.session_state["video_result"]
+        if st.session_state.get("video_source_title"):
+            st.caption(
+                f"Source used: {st.session_state.get('video_source_title')} "
+                f"({st.session_state.get('video_source_id')})"
+            )
 
         # Metrics
         m1, m2, m3 = st.columns(3)
@@ -1560,7 +1629,7 @@ with tab4:
 
         # Audit trail
         from src.audit import get_audit_trail
-        trail = get_audit_trail("video")
+        trail = get_audit_trail(st.session_state.get("video_session_id", "video"))
         if trail:
             with st.expander("Pipeline Audit Trail"):
                 for entry in trail:

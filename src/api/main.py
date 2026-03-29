@@ -2,6 +2,7 @@
 
 import sys
 import os
+import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from fastapi import FastAPI, HTTPException
@@ -16,7 +17,7 @@ from src.models import (
 from src.audit import get_audit_trail
 from src.tools.article_loader import (
     load_budget_articles, load_homepage_articles,
-    load_breaking_news, load_user_profile,
+    load_breaking_news, load_breaking_news_articles, load_user_profile,
 )
 from src.agents.navigator.pipeline import run_navigator_pipeline, handle_query
 from src.agents.persona_feed.pipeline import run_feed_comparison
@@ -299,6 +300,7 @@ async def run_feed_ab_test(request: FeedComparisonRequest):
 
 class VideoRequest(BaseModel):
     article_source: str = "breaking"  # loads the breaking news article
+    article_id: str | None = None
     target_language: str = "hi"
 
 
@@ -306,11 +308,12 @@ class VideoRequest(BaseModel):
 async def generate_video(request: VideoRequest):
     """Generate explainer video from breaking news in requested language."""
     try:
-        article = load_breaking_news()
+        article = load_breaking_news(article_id=request.article_id)
+        session_id = f"video-{article.id}-{request.target_language}-{int(time.time() * 1000)}"
         result = await run_video_pipeline(
             article,
             target_language=request.target_language,
-            session_id="video",
+            session_id=session_id,
         )
         return {
             "video_path": result.video_path,
@@ -345,6 +348,8 @@ async def list_articles(source: str = "budget"):
         articles = load_budget_articles()
     elif source == "homepage":
         articles = load_homepage_articles()
+    elif source == "breaking":
+        articles = load_breaking_news_articles()
     else:
         articles = []
     return {"count": len(articles), "articles": [a.model_dump() for a in articles]}

@@ -11,6 +11,7 @@ from src.config import (
 from src.audit import log_agent_step, AuditTimer
 from src.models import VideoScenePlan
 from src.agents.video.article_visuals import fetch_article_visuals
+from src.agents.video.localized_event import is_english_heavy, localize_event_text
 
 
 # Colors
@@ -429,6 +430,8 @@ async def compose_video(
             strict_scene_sync = bool(scene_audio_durations and scene_plan and scene_plan.scenes)
             # Generate frames
             title_text = facts.get("what", "ब्रेकिंग न्यूज़")
+            if language.lower() != "en" and is_english_heavy(title_text):
+                title_text = localize_event_text(title_text, language)
             key_numbers = facts.get("key_numbers", [])
             impacts = facts.get("impact_points", [])
             script_sections = _split_script_sections(script_hindi, max_sections=5)

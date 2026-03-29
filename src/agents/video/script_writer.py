@@ -6,6 +6,7 @@ from src.llm import call_llm, parse_json_response
 from src.config import get_video_language_profile
 from src.audit import log_agent_step, AuditTimer
 from src.models import VideoScript
+from src.agents.video.localized_event import is_english_heavy, localize_event_text
 
 
 SYSTEM_INSTRUCTION = """You are an Economic Times explainer script specialist.
@@ -32,30 +33,22 @@ def _language_prompt(language: str) -> str:
 
 def _fallback_script(facts: dict, language: str) -> VideoScript:
     lang = (language or "hi").lower()
-    what = facts.get("what", "एक बड़ी कंपनी ने दिवालिया प्रक्रिया शुरू की है।")
+    original_what = facts.get("what", "")
+    what = original_what or "एक बड़ी कारोबारी घटना सामने आई है।"
 
     def english_token_count(text: str) -> int:
         return len(re.findall(r"[A-Za-z]{3,}", text or ""))
 
-    if lang != "en" and english_token_count(what) > 4:
-        localized_what = {
-            "hi": "एक बड़ी इंफ्रास्ट्रक्चर कंपनी ने दिवालिया प्रक्रिया शुरू की है।",
-            "mr": "एका मोठ्या इन्फ्रास्ट्रक्चर कंपनीने दिवाळखोरी प्रक्रिया सुरू केली आहे.",
-            "bho": "एक बड़ इंफ्रास्ट्रक्चर कंपनी दिवालिया प्रक्रिया में गइल बा.",
-            "ta": "ஒரு பெரிய உள்கட்டமைப்பு நிறுவனம் திவால் செயல்முறையை தொடங்கியுள்ளது.",
-            "te": "ఒక పెద్ద మౌలిక వసతుల సంస్థ దివాలా ప్రక్రియను ప్రారంభించింది.",
-            "kn": "ಒಂದು ದೊಡ್ಡ ಮೂಲಸೌಕರ್ಯ ಕಂಪನಿ ದಿವಾಳಿತನ ಪ್ರಕ್ರಿಯೆಯನ್ನು ಆರಂಭಿಸಿದೆ.",
-            "pa": "ਇੱਕ ਵੱਡੀ ਢਾਂਚਾਗਤ ਕੰਪਨੀ ਨੇ ਦਿਵਾਲੀਆ ਪ੍ਰਕਿਰਿਆ ਸ਼ੁਰੂ ਕੀਤੀ ਹੈ।",
-        }
-        what = localized_what.get(lang, localized_what["hi"])
+    if lang != "en" and (english_token_count(what) > 4 or is_english_heavy(what)):
+        what = localize_event_text(original_what or what, lang)
     if lang == "en":
         script_text = (
             "Hello and welcome. Today's big business update: "
             f"{what} "
-            "This development matters because it can impact banks, investors, employees, and ongoing projects. "
-            "Key stakeholders are now watching the legal process, creditor decisions, and project continuity. "
-            "For retail investors, the main takeaway is to track debt levels, cash-flow stability, and sector-wide spillover risk before making decisions. "
-            "What to watch next: creditor committee actions, resolution milestones, and market reaction in related stocks."
+            "This development matters because it can affect operations, customers, investors, and confidence in the broader sector. "
+            "Key stakeholders are now watching official updates, corrective actions, and how quickly normalcy is restored. "
+            "For retail investors, the main takeaway is to track company disclosures, execution quality, and spillover risks before making decisions. "
+            "What to watch next: regulator communication, management updates, and market reaction in related stocks."
         )
         transliteration = script_text
     elif lang == "mr":
@@ -116,10 +109,10 @@ def _fallback_script(facts: dict, language: str) -> VideoScript:
         script_text = (
             "नमस्कार। आज की बड़ी कारोबारी खबर में "
             f"{what} "
-            "इसका असर बैंकों, निवेशकों, कर्मचारियों और चल रही परियोजनाओं पर पड़ सकता है। "
-            "अब सबसे महत्वपूर्ण बात यह है कि कानूनी प्रक्रिया कितनी तेज़ चलती है, कर्ज़दाताओं के फैसले क्या आते हैं, और परियोजनाएं समय पर पूरी हो पाती हैं या नहीं। "
-            "आपके लिए इसका मतलब है कि निवेश से पहले कंपनी का कर्ज़, नकदी स्थिति और सेक्टर पर असर ज़रूर देखें। "
-            "आगे क्या देखना है: कर्ज़दाता समिति की बैठक, समाधान प्रक्रिया की प्रगति, और संबंधित शेयरों की चाल।"
+            "इसका असर संचालन, उपभोक्ताओं, निवेशकों और संबंधित सेक्टर की धारणा पर पड़ सकता है। "
+            "अब सबसे महत्वपूर्ण बात यह है कि आधिकारिक अपडेट क्या आते हैं, सुधारात्मक कदम कितनी तेजी से लागू होते हैं, और स्थिति कितनी जल्दी स्थिर होती है। "
+            "आपके लिए इसका मतलब है कि निवेश से पहले कंपनी के खुलासे, निष्पादन क्षमता और सेक्टर पर संभावित असर ज़रूर देखें। "
+            "आगे क्या देखना है: नियामक संचार, प्रबंधन की अगली अपडेट, और संबंधित शेयरों की चाल।"
         )
         transliteration = "Namaskaar..."
 

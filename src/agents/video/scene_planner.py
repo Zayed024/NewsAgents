@@ -5,6 +5,7 @@ import re
 from src.llm import call_llm, parse_json_response
 from src.audit import log_agent_step, AuditTimer
 from src.models import VideoScene, VideoScenePlan
+from src.agents.video.localized_event import is_english_heavy, localize_event_text
 
 
 SYSTEM_INSTRUCTION = """You are a visual story planner for business-news explainers.
@@ -23,19 +24,11 @@ Rules:
 def _fallback_scene_plan(facts: dict, script_text: str, language: str, target_duration_seconds: int) -> VideoScenePlan:
     is_en = (language or "hi").lower() == "en"
     lang = (language or "hi").lower()
-    what = facts.get("what", "Major business update")
+    original_what = facts.get("what", "")
+    what = original_what or ("Major business update" if is_en else "एक बड़ी कारोबारी अपडेट")
 
-    if not is_en and len(re.findall(r"[A-Za-z]{3,}", what or "")) > 4:
-        localized_what = {
-            "hi": "एक बड़ी इंफ्रास्ट्रक्चर कंपनी के वित्तीय संकट ने कानूनी प्रक्रिया का रूप ले लिया है।",
-            "mr": "मोठ्या इन्फ्रास्ट्रक्चर कंपनीचा आर्थिक ताण आता कायदेशीर प्रक्रियेत गेला आहे.",
-            "bho": "बड़ इंफ्रास्ट्रक्चर कंपनी के वित्तीय संकट अब कानूनी प्रक्रिया में पहुंच गइल बा.",
-            "ta": "பெரிய உள்கட்டமைப்பு நிறுவனத்தின் நிதி நெருக்கடி இப்போது சட்ட செயல்முறைக்கு சென்றுள்ளது.",
-            "te": "పెద్ద మౌలిక వసతుల సంస్థ ఆర్థిక ఒత్తిడి ఇప్పుడు చట్టపరమైన ప్రక్రియకు చేరుకుంది.",
-            "kn": "ದೊಡ್ಡ ಮೂಲಸೌಕರ್ಯ ಕಂಪನಿಯ ಆರ್ಥಿಕ ಒತ್ತಡ ಇದೀಗ ಕಾನೂನು ಪ್ರಕ್ರಿಯೆಗೆ ಹೋಗಿದೆ.",
-            "pa": "ਵੱਡੀ ਢਾਂਚਾਗਤ ਕੰਪਨੀ ਦਾ ਵਿੱਤੀ ਦਬਾਅ ਹੁਣ ਕਾਨੂੰਨੀ ਪ੍ਰਕਿਰਿਆ ਵਿੱਚ ਦਾਖ਼ਲ ਹੋ ਗਿਆ ਹੈ।",
-        }
-        what = localized_what.get(lang, localized_what["hi"])
+    if not is_en and (len(re.findall(r"[A-Za-z]{3,}", what or "")) > 4 or is_english_heavy(what)):
+        what = localize_event_text(original_what or what, lang)
 
     impacts = facts.get("impact_points", [])
     impact_text = "; ".join(impacts[:2]) if impacts else (
@@ -168,55 +161,55 @@ def _fallback_scene_plan(facts: dict, script_text: str, language: str, target_du
             VideoScene(
                 chapter="अध्याय 1", heading="आज की बड़ी अपडेट", text=what,
                 narration_text=(
-                    f"{what} यह खबर बैंकों, परियोजनाओं और निवेशकों के लिए महत्वपूर्ण मोड़ है। "
-                    "इस वीडियो में हम समझेंगे कि स्थिति कैसे बनी, असर कहां पड़ेगा और आगे कौन-से संकेत देखने चाहिए।"
+                    f"{what} यह अपडेट संचालन, उपभोक्ताओं, निवेशकों और संबंधित सेक्टर की धारणा पर असर डाल सकती है। "
+                    "इस वीडियो में हम समझेंगे कि क्या हुआ, इसका असर क्या हो सकता है, और आगे कौन-से संकेत देखने चाहिए।"
                 ),
                 sentiment="negative", duration_seconds=12, scene_type="narrative",
             ),
             VideoScene(
-                chapter="अध्याय 2", heading="यह स्थिति क्यों बनी", text=facts.get("why", "कर्ज़ दबाव और भुगतान में लगातार चूक"),
+                chapter="अध्याय 2", heading="यह क्यों हुआ", text=facts.get("why", "प्राथमिक कारणों और आधिकारिक विवरण की जांच जारी है"),
                 narration_text=(
-                    "लंबे समय तक कर्ज़ दबाव और किस्त भुगतान में चूक ने स्थिति को कानूनी प्रक्रिया तक पहुंचा दिया। "
-                    "जब नकदी प्रवाह कमजोर रहता है और पुनर्गठन सफल नहीं होता, तब जोखिम तेजी से बढ़ता है।"
+                    "घटना के पीछे कई परिचालन और निर्णय संबंधी कारण हो सकते हैं, जिनकी पुष्टि आधिकारिक अपडेट से होती है। "
+                    "निवेशकों के लिए जरूरी है कि वे प्रबंधन और नियामक दोनों पक्षों की जानकारी साथ में देखें।"
                 ),
                 sentiment="negative", duration_seconds=12, scene_type="narrative",
             ),
             VideoScene(
-                chapter="अध्याय 3", heading="महत्वपूर्ण आंकड़े", text="कुल कर्ज़, देनदारी और कर्ज़दाता जोखिम कहानी की दिशा तय करेंगे।",
+                chapter="अध्याय 3", heading="महत्वपूर्ण तथ्य", text="मुख्य आंकड़े और परिचालन संकेत कहानी की दिशा तय करेंगे।",
                 narration_text=(
-                    "मुख्य आंकड़े बताते हैं कि जोखिम कितना गहरा है: कुल देनदारी, बड़े कर्ज़दाताओं का एक्सपोज़र और वसूली की संभावनाएं। "
+                    "मुख्य आंकड़ों, देरी के पैटर्न, और आधिकारिक कार्रवाई की टाइमिंग से जोखिम का बेहतर आकलन किया जा सकता है। "
                     "यही संकेत आगे के निर्णयों और बाजार की धारणा को प्रभावित करते हैं।"
                 ),
                 sentiment="negative", duration_seconds=12, scene_type="numbers",
             ),
             VideoScene(
-                chapter="अध्याय 4", heading="कहानी की टाइमलाइन", text="कर्ज़ दबाव -> कानूनी फाइलिंग -> कर्ज़दाता प्रक्रिया -> समाधान",
+                chapter="अध्याय 4", heading="कहानी की टाइमलाइन", text="घटना -> शुरुआती प्रतिक्रिया -> आधिकारिक कार्रवाई -> स्थिरता की दिशा",
                 narration_text=(
-                    "कहानी की प्रगति साफ है: पहले वित्तीय दबाव बढ़ा, फिर औपचारिक कानूनी फाइलिंग हुई, और अब कर्ज़दाता प्रक्रिया शुरू होगी। "
-                    "अगला चरण समाधान प्रस्तावों और क्रियान्वयन की गति पर निर्भर करेगा।"
+                    "कहानी की प्रगति साफ है: पहले घटना सामने आई, फिर शुरुआती प्रतिक्रिया आई, और अब आधिकारिक फॉलो-अप पर फोकस है। "
+                    "अगला चरण क्रियान्वयन की गुणवत्ता और अपडेट की पारदर्शिता पर निर्भर करेगा।"
                 ),
                 sentiment="neutral", duration_seconds=11, scene_type="timeline",
             ),
             VideoScene(
-                chapter="अध्याय 5", heading="विपरीत नजरिया", text="क्या नियंत्रित पुनर्गठन से कुछ मूल्य बच सकता है?",
+                chapter="अध्याय 5", heading="विपरीत नजरिया", text="क्या बाजार ने जोखिम को जरूरत से ज्यादा कीमत में जोड़ दिया है?",
                 narration_text=(
-                    "एक विपरीत नजरिया यह कहता है कि अगर परिचालन संपत्तियां चालू रहें और कर्ज़दाता समन्वय बेहतर हो, तो कुछ मूल्य सुरक्षित रह सकता है। "
-                    "ऐसे मामलों में क्रियान्वयन अनुशासन सबसे बड़ा अंतर पैदा करता है।"
+                    "एक विपरीत नजरिया यह कहता है कि अगर सुधारात्मक कदम समय पर लागू होते हैं, तो स्थिति अपेक्षा से जल्दी स्थिर हो सकती है। "
+                    "ऐसे मामलों में निष्पादन अनुशासन और स्पष्ट संचार सबसे बड़ा अंतर पैदा करते हैं।"
                 ),
                 sentiment="neutral", duration_seconds=11, scene_type="contrarian",
             ),
             VideoScene(
                 chapter="अध्याय 6", heading="किन पर असर पड़ेगा", text=impact_text,
                 narration_text=(
-                    f"तुरंत असर बैंकों, कर्मचारियों और चल रही परियोजनाओं पर दिख सकता है। {impact_text} "
+                    f"तुरंत असर ग्राहकों, कर्मचारियों, निवेशकों और संचालन श्रृंखला पर दिख सकता है। {impact_text} "
                     "खुदरा निवेशकों के लिए इस समय जोखिम प्रबंधन सबसे जरूरी है।"
                 ),
                 sentiment="negative", duration_seconds=11, scene_type="impact",
             ),
             VideoScene(
-                chapter="अध्याय 7", heading="अब आगे क्या देखें", text="कर्ज़दाता समिति के फैसले, समाधान माइलस्टोन और परियोजना प्रगति।",
+                chapter="अध्याय 7", heading="अब आगे क्या देखें", text="नियामक अपडेट, प्रबंधन की अगली घोषणा और संचालन सामान्यीकरण।",
                 narration_text=(
-                    "आगे की दिशा तय करने वाले प्रमुख संकेत हैं: कर्ज़दाता समिति के शुरुआती फैसले, समाधान प्रक्रिया की समय-सीमा, और परियोजनाओं का हस्तांतरण। "
+                    "आगे की दिशा तय करने वाले प्रमुख संकेत हैं: नियामक संचार, प्रबंधन का अगला एक्शन प्लान, और संचालन की वास्तविक प्रगति। "
                     "इन्हीं संकेतों से आने वाले हफ्तों की धारणा बनेगी।"
                 ),
                 sentiment="cautious", duration_seconds=11, scene_type="watch_next",
@@ -232,22 +225,26 @@ def _fallback_scene_plan(facts: dict, script_text: str, language: str, target_du
     return VideoScenePlan(
         target_duration_seconds=max(target_duration_seconds, 70),
         scenes=scenes,
-        story_arc_summary="Debt stress escalated into legal action and now enters creditor-led resolution.",
-        key_players=[facts.get("entities", {}).get("company", "Company"), "Creditors", "Regulators"],
+        story_arc_summary=(
+            "A major event triggered immediate reactions and now moves into monitored follow-up actions."
+            if is_en else
+            "एक बड़ी घटना के बाद कहानी अब आधिकारिक फॉलो-अप और स्थिरता संकेतों की ओर बढ़ रही है।"
+        ),
+        key_players=[facts.get("entities", {}).get("company", "Company"), "Management", "Regulators"],
         sentiment_shifts=["Shock", "Risk reassessment", "Cautious monitoring"],
         contrarian_perspective=(
-            "Operational assets and disciplined creditor coordination can preserve partial value."
+            "Disciplined execution and timely corrective actions can stabilize sentiment faster than expected."
             if is_en else
-            "परिचालन संपत्ति और कर्ज़दाता समन्वय से आंशिक मूल्य बचाया जा सकता है।"
+            "समय पर सुधारात्मक कदम और अनुशासित निष्पादन अपेक्षा से जल्दी स्थिरता ला सकते हैं।"
         ),
         watch_next=[
-            "First creditor committee decisions",
-            "Resolution process milestones",
-            "Project continuity and handover updates",
+            "Regulator communications",
+            "Management action-plan updates",
+            "Operational normalization signals",
         ] if is_en else [
-            "कर्ज़दाता समिति के शुरुआती फैसले",
-            "समाधान प्रक्रिया के माइलस्टोन",
-            "परियोजना प्रगति और हस्तांतरण अपडेट",
+            "नियामक संचार",
+            "प्रबंधन की एक्शन-प्लान अपडेट",
+            "संचालन सामान्य होने के संकेत",
         ],
     )
 
