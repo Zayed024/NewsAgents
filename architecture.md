@@ -165,9 +165,42 @@ Audit trails are returned with every API response and displayed in the UI with c
 | Local Fallback | Ollama + qwen2.5vl:3b | Zero-cost degradation, enterprise resilience |
 | Backend | FastAPI 0.115.9 | Async-native, OpenAPI docs |
 | Frontend | Streamlit 1.48.1 | Rapid prototyping, 3-tab interface |
-| TTS | edge-tts 7.2.8 | Free Hindi voices, natural prosody |
+| Graph Visualization | Plotly 5.0.0 | Interactive, hoverable entity-angle network graphs |
+| TTS | edge-tts 7.2.8 | 8 Indian languages with language-specific voices |
 | Video | Pillow + ffmpeg 8.0 | Frame generation + composition |
 | Vector Store | ChromaDB 1.0.11 | Article embeddings (available for extension) |
+
+---
+
+## Frontend UI Features
+
+The Streamlit interface exposes all three pipelines through a 3-tab design with integrated visualization and controls:
+
+### Tab 1: News Navigator
+- **Briefing Generation**: Topic input with optional topic coverage enforcement
+- **Angle-based Navigation**: Non-overlapping summary per angle with metadata
+- **Entity Graph**: Interactive Plotly network visualization showing:
+  - Entity nodes (left arc) with hoverable metadata: name, type, article count, related angles
+  - Angle nodes (right lane) with connection details
+  - Automatic fallback to Graphviz if Plotly unavailable
+- **Entity Explorer**: Dropdown selector to drill into specific entities and their connected angles
+- **Follow-up Q&A**: Ask clarifying questions on the briefing (history-aware, non-repeating answers)
+- **Engagement Metrics**: Article count, angle count, pipeline latency, estimated cost
+
+### Tab 2: Personalised Feed
+- **Persona Selection**: CFO vs. Young Investor profiles (extensible)
+- **Side-by-side Comparison**: Delta summary showing story overlap, format changes, reading level
+- **Adaptive Content**: Persona-specific rewrites (depth, tone, jargon, visualizations)
+
+### Tab 3: Vernacular Video
+- **Language Selection**: 8 languages with native voices (Hindi, Marathi, Tamil, Telugu, Kannada, Bhojpuri, Punjabi, English)
+- **Video Generation**: Chaptered explainer video with fact-checked narration
+- **Scene Viewer**: Timeline visualization with chapter metadata
+
+### Settings Page
+- **Runtime Flags**: Visibility into Retrieval Contracts and Corpus Kill Switch status
+- **Ops Controls**: Crawl refresh, subset refresh, freshness metrics, recent run summaries
+- **Compliance Controls**: Load compliance snapshots, generate compliance reports
 
 ---
 

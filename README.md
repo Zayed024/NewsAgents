@@ -16,7 +16,8 @@ A **15-agent multi-agent system** that transforms how business news is consumed 
 
 - **Smart Model Routing**: Gemini Flash for extraction, Gemini Pro for synthesis, Ollama for fallback — **77% cost reduction**
 - **15 Specialised Agents**: Clear role separation with handoff protocols across 3 pipelines
-- **7 Indian Languages**: Hindi, Marathi, Tamil, Telugu, Kannada, Bhojpuri, Punjabi — with language validation guardrails
+- **Interactive Entity Graph**: Hoverable Plotly network visualization showing entity-angle relationships with metadata drill-down
+- **8 Languages**: Hindi, Marathi, Tamil, Telugu, Kannada, Bhojpuri, Punjabi, English — with language-specific TTS voices and writing systems
 - **Engagement Tracking**: Cross-session learning retunes content delivery without LLM cost (extra credit feature)
 - **Story Arc Depth**: Chaptered videos with sentiment tracking, contrarian perspectives, and "what to watch next"
 - **Full Audit Trail**: Every agent step logged with model, latency, token count, and estimated cost
@@ -119,13 +120,14 @@ See [IMPACT_MODEL.md](IMPACT_MODEL.md) for detailed calculations.
 
 | Language | Script | TTS Voice | Status |
 |----------|--------|-----------|--------|
+| English | Latin | en-IN-NeerjaNeural | Full support |
 | Hindi | Devanagari | hi-IN-SwaraNeural | Full support |
 | Marathi | Devanagari | mr-IN-AarohiNeural | Full support |
 | Tamil | Tamil | ta-IN-PallaviNeural | Full support |
 | Telugu | Telugu | te-IN-ShrutiNeural | Full support |
 | Kannada | Kannada | kn-IN-SapnaNeural | Full support |
 | Bhojpuri | Devanagari | hi-IN-SwaraNeural (fallback) | Text + fallback voice |
-| Punjabi | Gurmukhi | - | Text + video only |
+| Punjabi | Gurmukhi | pa-IN-OjasNeural | Full support |
 
 ---
 
