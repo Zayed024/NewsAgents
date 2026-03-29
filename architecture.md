@@ -86,7 +86,10 @@ Each agent step logs estimated token count and USD cost in the audit trail, maki
 | 3 | AngleClustering | Pro | Metadata + entities | 5-7 angle clusters | Editorial judgment on angle separation, minimises overlap |
 | 4 | SynthesisEngine | Pro | Angle clusters + full articles | Dense synthesis per angle | Non-overlapping, source-cited, with key takeaways |
 | 5 | QueryResponder | Pro | Question + full history | Targeted answer | Receives all previous answers, guarantees no repetition |
-| 6 | EngagementTracker | Local | User clicks, queries, dwell time | Retuned angle ordering | Cross-session learning, no LLM cost |
+| 6 | ContradictionDetector | Pro | All syntheses + articles | Cross-article contradictions | Flags opposing claims between sources with severity |
+| 7 | BlindSpotDetector | Pro | Articles + angles + topic | Coverage gaps | Surfaces important topics no article covers |
+| 8 | ReadingPathOptimizer | Pro | Articles + user profile | 3-4 article sequence | Optimal 2-minute reading path, progressively builds understanding |
+| 9 | EngagementTracker | Local | User clicks, queries, dwell time | Retuned angle ordering | Cross-session learning, no LLM cost |
 
 **Inter-agent communication**: Sequential pipeline with shared state. QueryResponder receives the complete synthesis history and all previous Q&A to guarantee non-overlapping answers. EngagementTracker logs interaction signals and feeds back into angle/content ranking for subsequent sessions.
 

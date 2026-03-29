@@ -16,6 +16,9 @@ from src.agents.navigator.topic_relevance import select_relevant_articles_for_to
 from src.agents.navigator.entity_graph import build_entity_navigation_map
 from src.agents.navigator.query_responder import respond_to_query, clear_query_history
 from src.agents.navigator.chroma_store import index_articles, search_articles
+from src.agents.navigator.contradiction_detector import detect_contradictions
+from src.agents.navigator.blind_spot_detector import detect_blind_spots
+from src.agents.navigator.reading_path import generate_reading_path
 from src.agents.engagement_tracker import (
     log_angle_click, log_query, log_session_start,
     get_retuned_angle_order, get_user_interest_vector,
@@ -106,6 +109,21 @@ async def run_navigator_pipeline(
             session_id,
         )
 
+        # Step 5.5: Detect contradictions across syntheses
+        contradictions = await detect_contradictions(syntheses, working_articles, session_id)
+
+        # Step 5.6: Detect coverage blind spots
+        blind_spots = await detect_blind_spots(
+            working_articles, angles,
+            topic=topic or "Union Budget 2026",
+            session_id=session_id,
+        )
+
+        # Step 5.7: Generate optimal reading path
+        reading_path = await generate_reading_path(
+            working_articles, syntheses, session_id=session_id,
+        )
+
         # Step 6: Index articles in ChromaDB for semantic search
         try:
             indexed = index_articles(articles)
@@ -161,6 +179,9 @@ async def run_navigator_pipeline(
         "deep_briefing_markdown": deep_briefing_markdown,
         "suggested_questions": suggested_questions,
         "coverage_report": coverage_report,
+        "contradictions": contradictions,
+        "blind_spots": blind_spots,
+        "reading_path": reading_path,
         "user_id": user_id,
     }
 

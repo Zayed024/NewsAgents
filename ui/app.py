@@ -770,6 +770,54 @@ with tab1:
                 if eng["top_angles"]:
                     st.caption(f"Most clicked angles: {', '.join(f'{a} ({c})' for a, c in eng['top_angles'])}")
 
+        # --- NEW: Reading Path, Contradictions, Blind Spots ---
+        from src.agents.navigator.pipeline import _briefing_cache
+        _cache = _briefing_cache.get("navigator", {})
+
+        reading_path = _cache.get("reading_path", {})
+        if reading_path and reading_path.get("path"):
+            with st.expander("If You Only Have 2 Minutes — Optimal Reading Path", expanded=False):
+                st.caption(reading_path.get("path_rationale", ""))
+                for step in reading_path["path"]:
+                    st.markdown(
+                        f"**{step.get('position', '?')}.** [{step.get('article_id', '')}] "
+                        f"**{step.get('title', '')}** ({step.get('read_time_minutes', '?')} min)"
+                    )
+                    st.caption(f"Why: {step.get('why_read_this', '')}")
+                total = reading_path.get("total_estimated_minutes", 0)
+                st.markdown(f"**Total: {total} minutes**")
+                skip = reading_path.get("skip_if_short_on_time", "")
+                if skip:
+                    st.caption(f"Short on time? Skip: {skip}")
+
+        contradictions = _cache.get("contradictions", [])
+        if contradictions:
+            with st.expander(f"Cross-Article Contradictions ({len(contradictions)} found)", expanded=False):
+                for c in contradictions:
+                    severity = c.get("severity", "medium")
+                    icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(severity, "🟡")
+                    st.markdown(f"{icon} **{c.get('topic', 'Disagreement')}** ({severity})")
+                    col_a, col_b = st.columns(2)
+                    with col_a:
+                        st.markdown(f"**View A** ({', '.join(c.get('source_a', []))}):")
+                        st.caption(c.get("claim_a", ""))
+                    with col_b:
+                        st.markdown(f"**View B** ({', '.join(c.get('source_b', []))}):")
+                        st.caption(c.get("claim_b", ""))
+                    st.caption(f"Why it matters: {c.get('why_it_matters', '')}")
+                    st.divider()
+
+        blind_spots = _cache.get("blind_spots", [])
+        if blind_spots:
+            with st.expander(f"Coverage Blind Spots ({len(blind_spots)} gaps)", expanded=False):
+                st.caption("Important topics not covered by any article in this set:")
+                for bs in blind_spots:
+                    imp = bs.get("importance", "medium")
+                    icon = "🔴" if imp == "high" else "🟡"
+                    st.markdown(f"{icon} **{bs.get('topic', '')}**")
+                    st.caption(f"{bs.get('why_it_matters', '')}")
+                    st.caption(f"Expected: {bs.get('expected_coverage', '')}")
+
         # Audit trail with cost
         if result.audit_trail:
             with st.expander("Audit Trail (Enterprise Readiness)"):
