@@ -161,6 +161,9 @@ class AuditEntry(BaseModel):
     input_summary: str = ""
     output_summary: str = ""
     latency_ms: int = 0
+    estimated_input_tokens: int = 0
+    estimated_output_tokens: int = 0
+    estimated_cost_usd: float = 0.0
     status: str = "success"  # success, fallback, error
     error_detail: str = ""
 

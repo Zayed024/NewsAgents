@@ -53,7 +53,7 @@ async def _ollama_fallback(prompt: str, system_instruction: str = "", error_msg:
     """Fallback to local Ollama model."""
     try:
         full_prompt = f"{system_instruction}\n\n{prompt}" if system_instruction else prompt
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=180.0) as client:
             response = await client.post(
                 f"{OLLAMA_BASE_URL}/api/generate",
                 json={
@@ -99,7 +99,7 @@ def call_llm_sync(
             resp = httpx.post(
                 f"{OLLAMA_BASE_URL}/api/generate",
                 json={"model": OLLAMA_MODEL, "prompt": full_prompt, "stream": False},
-                timeout=60.0,
+                timeout=180.0,
             )
             return resp.json().get("response", "")
         except Exception as e2:
