@@ -1,7 +1,6 @@
 """AngleClustering agent — clusters articles into navigable angles."""
 
 from src.llm import call_llm, parse_json_response
-from src.config import GEMINI_PRO
 from src.audit import log_agent_step, AuditTimer
 from src.models import AngleCluster, AngleClusters, Article, EntityMap
 
@@ -68,7 +67,7 @@ Rules:
 
         response = await call_llm(
             prompt=prompt,
-            model=GEMINI_PRO,
+            model="pro",
             system_instruction=SYSTEM_INSTRUCTION,
             response_mime_type="application/json",
             temperature=0.4,
@@ -85,7 +84,7 @@ Rules:
     log_agent_step(
         agent_name="AngleClustering",
         action="cluster_angles",
-        model_used=GEMINI_PRO,
+        model_used="pro",
         input_summary=f"{len(articles)} articles, {len(entity_map.sectors)} sectors",
         output_summary=f"{len(result)} angles created: {[a.angle_name for a in result]}",
         latency_ms=timer.elapsed_ms,

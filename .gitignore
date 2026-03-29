@@ -10,6 +10,7 @@ __pycache__/
 # Environment/local config
 .env
 .env.*
+!.env.example
 
 # Generated media/output artifacts
 output/
@@ -25,5 +26,17 @@ data/corpus/compliance/reports/
 .DS_Store
 Thumbs.db
 *.log
+*.swp
+*~
 
+# Internal scripts (not part of submission)
+PITCH_VIDEO_SCRIPT.md
+demonstration_script.py
+quick_demo.py
+refactor_ui.py
 
+# Internal status docs (not submission deliverables)
+ACHIEVEMENT_REPORT.md
+EXECUTIVE_SUMMARY.md
+FINAL_PRESENTATION_REPORT.md
+PROJECT_STATUS.md

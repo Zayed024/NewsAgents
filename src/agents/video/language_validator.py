@@ -6,7 +6,7 @@ Validates and corrects script + scene text into the requested target language.
 import re
 
 from src.llm import call_llm, parse_json_response
-from src.config import GEMINI_FLASH, get_video_language_profile
+from src.config import get_video_language_profile
 from src.audit import log_agent_step, AuditTimer
 from src.models import VideoScript, VideoScenePlan, VideoScene
 
@@ -129,7 +129,7 @@ Return strict JSON:
 
             response = await call_llm(
                 prompt=prompt,
-                model=GEMINI_FLASH,
+                model="flash",
                 system_instruction=SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
                 temperature=0.2,
@@ -197,7 +197,7 @@ Return strict JSON:
     log_agent_step(
         agent_name="LanguageValidator",
         action="validate_and_correct",
-        model_used=GEMINI_FLASH,
+        model_used="flash",
         input_summary=f"Lang: {target_language}, scenes: {len(scene_plan.scenes)}",
         output_summary=(
             f"Script chars: {len(corrected_script.script_hindi)}, "

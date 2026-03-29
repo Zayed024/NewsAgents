@@ -3,7 +3,6 @@
 import re
 
 from src.llm import call_llm, parse_json_response, is_llm_unavailable_response
-from src.config import GEMINI_PRO
 from src.audit import log_agent_step, AuditTimer
 from src.models import AngleCluster, Article, SynthesisEntry, BriefingSynthesis
 
@@ -69,7 +68,7 @@ Produce a JSON response:
 
             response = await call_llm(
                 prompt=prompt,
-                model=GEMINI_PRO,
+                model="pro",
                 system_instruction=SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
                 temperature=0.5,
@@ -89,7 +88,7 @@ Produce a JSON response:
         log_agent_step(
             agent_name="SynthesisEngine",
             action=f"synthesize_{angle.angle_name}",
-            model_used=GEMINI_PRO,
+            model_used="pro",
             input_summary=f"Angle: {angle.angle_name}, {len(angle.article_ids)} articles",
             output_summary=f"Synthesis: {len(entry.synthesis)} chars, {len(entry.key_takeaways)} takeaways",
             latency_ms=timer.elapsed_ms,

@@ -1,7 +1,6 @@
 """Build a single explorable deep briefing from angle syntheses."""
 
 from src.llm import call_llm, parse_json_response
-from src.config import GEMINI_PRO
 from src.audit import log_agent_step, AuditTimer
 from src.models import AngleCluster, SynthesisEntry
 
@@ -61,7 +60,7 @@ Rules:
 
         response = await call_llm(
             prompt=prompt,
-            model=GEMINI_PRO,
+            model="pro",
             system_instruction=SYSTEM_INSTRUCTION,
             response_mime_type="application/json",
             temperature=0.4,
@@ -80,7 +79,7 @@ Rules:
     log_agent_step(
         agent_name="BriefingBuilder",
         action="build_interactive_briefing",
-        model_used=GEMINI_PRO,
+        model_used="pro",
         input_summary=f"{len(angles)} angles, {len(syntheses)} syntheses",
         output_summary=f"markdown {len(markdown)} chars, {len(questions)} suggested questions",
         latency_ms=timer.elapsed_ms,

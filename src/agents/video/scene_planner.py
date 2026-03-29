@@ -3,7 +3,6 @@
 import re
 
 from src.llm import call_llm, parse_json_response
-from src.config import GEMINI_FLASH
 from src.audit import log_agent_step, AuditTimer
 from src.models import VideoScene, VideoScenePlan
 
@@ -304,7 +303,7 @@ Return strict JSON:
         try:
             response = await call_llm(
                 prompt=prompt,
-                model=GEMINI_FLASH,
+                model="flash",
                 system_instruction=SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
                 temperature=0.2,
@@ -329,7 +328,7 @@ Return strict JSON:
     log_agent_step(
         agent_name="ScenePlanner",
         action="plan_scenes",
-        model_used=GEMINI_FLASH,
+        model_used="flash",
         input_summary=f"Lang: {language}, target: {target_duration_seconds}s",
         output_summary=f"Scenes: {len(result.scenes)}, total target: {result.target_duration_seconds}s",
         latency_ms=timer.elapsed_ms,

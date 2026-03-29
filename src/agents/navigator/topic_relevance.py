@@ -3,7 +3,6 @@
 from datetime import datetime, timezone
 
 from src.audit import AuditTimer, log_agent_step
-from src.config import GEMINI_FLASH
 from src.models import Article, RetrievalFreshness, TopicRetrievalContract
 from src.tools.corpus.relevance import hybrid_rank_articles, llm_rerank_top
 from src.tools.corpus.subsets import materialize_topic_subset, load_topic_subset
@@ -179,7 +178,7 @@ async def select_relevant_articles_for_topic(
     log_agent_step(
         agent_name="TopicRelevanceSelector",
         action="scan_all_articles_for_topic",
-        model_used=GEMINI_FLASH,
+        model_used="flash",
         input_summary=f"topic={topic}, scanned={len(articles)}",
         output_summary=f"relevant={len(selected)}, excluded={len(excluded)}, subset_reused=False",
         latency_ms=timer.elapsed_ms,
