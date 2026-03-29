@@ -63,6 +63,7 @@ A deterministic routing table assigns each task type to the optimal model — **
 | Ranking, fact-checking, scene planning | Gemini 2.0 Flash | $0.10/M tokens | Comparison/structuring tasks |
 | Language validation | Gemini 2.0 Flash | $0.10/M tokens | Conditional — only runs when leakage detected |
 | Multi-article synthesis | Gemini 2.0 Pro | $1.25/M tokens | Requires editorial judgment |
+| Creative writing (vernacular) | Gemini 2.0 Pro | $1.25/M tokens | Nuance, cultural adaptation |
 | Creative writing (multilingual scripts) | Gemini 2.0 Pro | $1.25/M tokens | Nuance, cultural adaptation |
 | Fallback / degradation | Ollama qwen2.5vl:3b | $0.00 (local) | Enterprise resilience |
 
@@ -102,31 +103,21 @@ Each agent step logs estimated token count and USD cost in the audit trail, maki
 
 | # | Agent | Model | Key Behaviour |
 |---|-------|-------|---------------|
-| 1 | BreakingIngestor | Flash | 5W1H extraction + heuristic enrichment for sparse LLM output |
-| 2 | ScriptWriter | Pro | Language-aware script with cultural analogies, localized fallbacks for 7 languages |
-| 3 | FactChecker | Flash | Claim-by-claim verification against source, accuracy score |
-| 4 | ScenePlanner | Flash | Chaptered scene plan (6-10 scenes) with story arc, sentiment shifts, contrarian view, watch-next |
-| 5 | LanguageValidator | Flash | Conditional — detects and corrects English leakage in non-English scripts |
-| 6 | AudioGenerator | edge-tts | Per-scene TTS with concurrent generation, duration-aware padding, voice fallback chains |
-| 7 | VideoComposer | PIL+ffmpeg | Chapter frames with progress bars, article image backgrounds, timeline scenes, A/V sync |
-| — | ArticleVisualFetcher | httpx | Scrapes og:image/twitter:image from source URL for video backgrounds |
+| 1 | UserProfiler | Flash | Converts profile JSON to content delivery preferences |
+| 2 | ContentRanker | Flash | Ranks articles by persona-specific relevance |
+| 3 | ContentAdapter | Pro | Rewrites content: CFO gets data tables, beginner gets ELI5 |
 
-**Supported languages**: Hindi, Marathi, Tamil, Telugu, Kannada, Bhojpuri, Punjabi — each with dedicated TTS voice, font, writing hints, and localized fallback templates.
+**Runs in parallel** for both personas, then compares outputs.
 
-**Story arc metadata**: Each video includes story arc summary, key players, sentiment shifts, contrarian perspective, and "what to watch next" signals — fulfilling the Track 8 requirement for narrative depth.
+### Scenario 3: Vernacular Video (5 agents, <60s budget)
 
----
-
-## Engagement Tracking (Extra Credit)
-
-The EngagementTracker is a cross-session learning module that:
-
-1. **Logs signals**: Which angles users click, which questions they ask, dwell time per synthesis, feed items clicked
-2. **Builds preferences**: Per-user interest vector that evolves across sessions
-3. **Retunes delivery**: Adjusts angle ordering in Navigator, article ranking in Feed, content depth dynamically
-4. **Zero LLM cost**: Purely local computation — no API calls, no latency impact
-
-This directly addresses the Track 8 extra credit: *"agents that track user engagement signals and retune content delivery in subsequent sessions."*
+| # | Agent | Model | Time Budget | Key Behaviour |
+|---|-------|-------|-------------|---------------|
+| 1 | BreakingIngestor | Flash | ~2s | 5W1H extraction |
+| 2 | ScriptWriter | Pro | ~8s | Hindi script, no English jargon, cultural analogies |
+| 3 | FactChecker | Flash | ~3s | Claim-by-claim verification against source |
+| 4 | AudioGenerator | edge-tts | ~15s | Hindi TTS (hi-IN-SwaraNeural) |
+| 5 | VideoComposer | PIL+ffmpeg | ~15s | Visual frames + audio → MP4 |
 
 ---
 
@@ -174,10 +165,9 @@ Audit trails are returned with every API response and displayed in the UI with c
 | Local Fallback | Ollama + qwen2.5vl:3b | Zero-cost degradation, enterprise resilience |
 | Backend | FastAPI 0.115.9 | Async-native, OpenAPI docs |
 | Frontend | Streamlit 1.48.1 | Rapid prototyping, 3-tab interface |
-| TTS | edge-tts 7.2.8 | Free multilingual voices (Hindi, Marathi, Tamil, Telugu, Kannada) |
-| Video | Pillow + ffmpeg 8.0 | Frame generation + chapter composition with A/V sync |
-| Vector Store | ChromaDB 1.0.11 | Article embeddings for semantic search in Q&A |
-| Engagement | Local JSON store | Cross-session user preference learning |
+| TTS | edge-tts 7.2.8 | Free Hindi voices, natural prosody |
+| Video | Pillow + ffmpeg 8.0 | Frame generation + composition |
+| Vector Store | ChromaDB 1.0.11 | Article embeddings (available for extension) |
 
 ---
 

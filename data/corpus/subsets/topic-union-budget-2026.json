@@ -1,7 +1,7 @@
 {
   "topic": "Union Budget 2026",
   "name": "topic-union-budget-2026",
-  "updated_at": "2026-03-28T19:04:23.211199+00:00",
+  "updated_at": "2026-03-29T11:27:16.740489+00:00",
   "total_scanned": 22,
   "selected_ids": [
     "budget-001",
@@ -18,17 +18,17 @@
   ],
   "coverage_mode": "hybrid_bm25_embedding_fallback",
   "inclusion_reasons": {
-    "budget-022": "fallback_combined_rank=4; strong_lexical=0.94; semantic_match=0.75",
+    "budget-001": "fallback_combined_rank=1; strong_lexical=1.00; semantic_match=1.00",
     "budget-021": "fallback_combined_rank=11; strong_lexical=0.88; semantic_match=0.70",
+    "budget-003": "fallback_combined_rank=5; strong_lexical=0.96; semantic_match=0.69",
+    "budget-014": "fallback_combined_rank=9; strong_lexical=0.89; semantic_match=0.71",
     "budget-007": "fallback_combined_rank=6; strong_lexical=0.94; semantic_match=0.68",
     "budget-017": "fallback_combined_rank=10; strong_lexical=0.99; semantic_match=0.55",
-    "budget-003": "fallback_combined_rank=5; strong_lexical=0.96; semantic_match=0.69",
-    "budget-001": "fallback_combined_rank=1; strong_lexical=1.00; semantic_match=1.00",
+    "budget-016": "fallback_combined_rank=3; strong_lexical=0.95; semantic_match=0.75",
     "budget-005": "fallback_combined_rank=7; strong_lexical=0.95; semantic_match=0.66",
+    "budget-022": "fallback_combined_rank=4; strong_lexical=0.94; semantic_match=0.75",
     "budget-012": "fallback_combined_rank=8; strong_lexical=0.88; semantic_match=0.73",
-    "budget-014": "fallback_combined_rank=9; strong_lexical=0.89; semantic_match=0.71",
-    "budget-004": "fallback_combined_rank=2; strong_lexical=0.93; semantic_match=0.88",
-    "budget-016": "fallback_combined_rank=3; strong_lexical=0.95; semantic_match=0.75"
+    "budget-004": "fallback_combined_rank=2; strong_lexical=0.93; semantic_match=0.88"
   },
   "exclusion_reasons": {
     "budget-002": "not_selected_after_rerank combined=0.7605; lexical=0.886; semantic=0.5723",

@@ -124,7 +124,7 @@ Still open:
 - Fresh-subset reuse behavior via repeated topic runs.
 - Legacy retrieval field compatibility while typed contracts are active.
 
-#### Settings-Based Ops/Compliance Controls (Top-Right)
+#### Settings Page for Ops/Compliance Controls (Top-Right Entry)
 - Run crawl refresh and subset refresh actions.
 - View freshness metrics and recent run summaries.
 - Load compliance snapshots and generate compliance report.
@@ -156,7 +156,7 @@ Still open:
 - `src/agents/navigator/topic_relevance.py` (retrieval safety handling)
 
 ### UI
-- `ui/app.py` (top-right Settings panel for ops/compliance controls)
+- `ui/app.py` (top-right Settings button that opens dedicated ops/compliance page)
 
 ## 7) Validation and Test Coverage
 

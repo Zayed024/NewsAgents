@@ -5,14 +5,41 @@ load_dotenv()
 
 # --- API Keys ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY", "")
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
+# --- LLM Provider Selection ---
+# Priority: NVIDIA (if key set) > Gemini (if key set) > Ollama (always available)
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "auto")  # auto, nvidia, gemini, ollama
+
 # --- Model Names ---
+# NVIDIA models (free endpoint)
+NVIDIA_PRO = "mistralai/mistral-nemotron"                  # Strong reasoning/synthesis
+NVIDIA_FLASH = "meta/llama-4-maverick-17b-128e-instruct"   # Fast extraction/classification
+NVIDIA_API_BASE = "https://integrate.api.nvidia.com/v1"
+
+# Gemini models (fallback if NVIDIA unavailable)
 GEMINI_PRO = "gemini-2.0-flash"
 GEMINI_FLASH = "gemini-2.0-flash"
+
+# Ollama (local fallback)
 OLLAMA_MODEL = "qwen2.5vl:3b"
 
-# --- GenAI Client (lazy init) ---
+
+def _resolve_provider() -> str:
+    """Determine which LLM provider to use."""
+    if LLM_PROVIDER != "auto":
+        return LLM_PROVIDER
+    if NVIDIA_API_KEY:
+        return "nvidia"
+    if GEMINI_API_KEY:
+        return "gemini"
+    return "ollama"
+
+
+ACTIVE_PROVIDER = _resolve_provider()
+
+# --- GenAI Client (lazy init, Gemini only) ---
 _genai_client = None
 
 
@@ -25,15 +52,16 @@ def get_genai_client():
     return _genai_client
 
 # --- Smart Model Routing Table ---
+# Maps task types to model names. The LLM layer resolves these to the active provider.
 MODEL_ROUTING = {
-    "extraction": GEMINI_FLASH,
-    "classification": GEMINI_FLASH,
-    "ranking": GEMINI_FLASH,
-    "fact_checking": GEMINI_FLASH,
-    "synthesis": GEMINI_PRO,
-    "creative_writing": GEMINI_PRO,
-    "complex_reasoning": GEMINI_PRO,
-    "fallback": OLLAMA_MODEL,
+    "extraction": "flash",
+    "classification": "flash",
+    "ranking": "flash",
+    "fact_checking": "flash",
+    "synthesis": "pro",
+    "creative_writing": "pro",
+    "complex_reasoning": "pro",
+    "fallback": "ollama",
 }
 
 # --- Paths ---
@@ -61,6 +89,11 @@ def _pick_existing_font(candidates: list[str]) -> str:
 
 
 LANGUAGE_FONT_CANDIDATES = {
+    "en": [
+        os.path.join(WINDOWS_FONTS_DIR, "segoeui.ttf"),
+        os.path.join(WINDOWS_FONTS_DIR, "arial.ttf"),
+        HINDI_FONT_PATH,
+    ],
     "bho": [
         os.path.join(FONTS_DIR, "NotoSansDevanagari-Regular.ttf"),
         os.path.join(WINDOWS_FONTS_DIR, "Nirmala.ttc"),
@@ -101,6 +134,14 @@ LANGUAGE_FONT_CANDIDATES = {
 # --- Language Profiles (Phase 1) ---
 DEFAULT_VIDEO_LANGUAGE = "hi"
 VIDEO_LANGUAGE_PROFILES = {
+    "en": {
+        "label": "English",
+        "tts_voice": "en-IN-NeerjaNeural",
+        "tts_fallback_voices": ["en-IN-PrabhatNeural", "en-US-JennyNeural"],
+        "font_path": _pick_existing_font(LANGUAGE_FONT_CANDIDATES["en"]),
+        "writing_hint": "Write in clear Indian-English business news style.",
+        "validator_hint": "English only.",
+    },
     "bho": {
         "label": "Bhojpuri",
         "tts_voice": "hi-IN-SwaraNeural",

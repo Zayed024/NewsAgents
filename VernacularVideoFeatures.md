@@ -1,6 +1,6 @@
 # Vernacular Video Features
 
-Last updated: 2026-03-28
+Last updated: 2026-03-29
 
 ## 1) Goal and Scope
 The Vernacular Video pipeline converts a breaking business news article into a short-form explainer video with:

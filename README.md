@@ -70,7 +70,13 @@ python tests/test_smoke.py
 | POST | `/api/v1/navigator/briefing` | Generate full News Navigator briefing |
 | POST | `/api/v1/navigator/query` | Ask follow-up question on briefing |
 | POST | `/api/v1/feed/compare` | Generate side-by-side persona feeds |
-| POST | `/api/v1/video/generate` | Generate multilingual explainer video |
+| POST | `/api/v1/video/generate` | Generate vernacular explainer video |
+| POST | `/api/v1/ops/crawl-refresh` | Run corpus crawl/ingestion refresh |
+| POST | `/api/v1/ops/subset-refresh` | Refresh topic and persona subsets |
+| GET | `/api/v1/ops/freshness-metrics` | Freshness and staleness metrics |
+| GET | `/api/v1/ops/run-summaries` | Recent operational run summaries |
+| GET | `/api/v1/ops/compliance/snapshots` | Recent compliance evidence snapshots |
+| GET | `/api/v1/ops/compliance/report` | Aggregate compliance report |
 | GET | `/api/v1/health` | Health check with model routing info |
 | GET | `/api/v1/audit/{session_id}` | Full audit trail for any session |
 
@@ -94,7 +100,7 @@ See [architecture.md](architecture.md) for the full architecture document with d
 | LLMs | Gemini 2.0 Pro + Flash, Ollama qwen2.5vl:3b |
 | Backend | FastAPI + Uvicorn |
 | Frontend | Streamlit |
-| Multilingual TTS | edge-tts (7 Indian language voices) |
+| Vernacular TTS | edge-tts (language-specific voices) |
 | Video | Pillow + ffmpeg |
 | Vector Search | ChromaDB |
 | Data Models | Pydantic v2 |
