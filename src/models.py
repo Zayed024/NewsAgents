@@ -99,6 +99,29 @@ class FeedComparison(BaseModel):
     delta_summary: str      # e.g. "8 of 10 stories differ..."
 
 
+# --- Signal Layer Models (Phase 8) ---
+class PersonalImpactSummary(BaseModel):
+    headline_impact: str
+    bullet_points: list[str]
+    confidence: str = "medium"  # low, medium, high
+    caveat: str = ""
+
+
+class ContrarianSummary(BaseModel):
+    primary_take: str
+    other_side_take: str
+    strongest_evidence_for_other_side: str
+    what_would_change_my_mind: str
+
+
+class SentimentPulse(BaseModel):
+    topic: str
+    label: str  # Bullish, Cautious, Bearish
+    score: float
+    reason_line: str
+    sample_size: int
+
+
 # --- Video Models ---
 class VideoScript(BaseModel):
     script_hindi: str

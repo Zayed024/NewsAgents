@@ -4,7 +4,7 @@
 
 A **15-agent multi-agent system** that transforms how business news is consumed — from static, one-size-fits-all articles to interactive, personalised, multilingual experiences.
 
-Phase roadmap status: **Phases 1-7 complete** (onboarding, personalization, adaptive feedback, UX upgrades, measurement + A/B).
+Phase roadmap status: **Phases 1-7 complete** plus **Experience Intelligence Layer (5 steps) complete** (personal impact explainers, contrarian views, live sentiment pulse).
 
 ## What It Does
 
@@ -22,6 +22,9 @@ Phase roadmap status: **Phases 1-7 complete** (onboarding, personalization, adap
 - **8 Languages**: Hindi, Marathi, Tamil, Telugu, Kannada, Bhojpuri, Punjabi, English — with language-specific TTS voices and writing systems
 - **Engagement Tracking**: Cross-session learning retunes content delivery without LLM cost (extra credit feature)
 - **Story Arc Depth**: Chaptered videos with sentiment tracking, contrarian perspectives, and "what to watch next"
+- **So What Explainer Layer**: One-click "What does this mean for me?" personal impact summary in the personalised feed
+- **Contrarian View Toggle**: "Hear the other side" in both News Navigator and Personalised Feed to avoid echo-chamber bias
+- **Live Sentiment Pulse**: Bullish/Cautious/Bearish pulse with one-line reason in sectioned feed and Story Arc chapters
 - **Full Audit Trail**: Every agent step logged with model, latency, token count, and estimated cost
 
 ## Quick Start
@@ -76,6 +79,7 @@ python tests/test_smoke.py
 .venv\Scripts\python tests/test_phase5_adaptive_learning.py
 .venv\Scripts\python tests/test_phase6_ux_upgrades.py
 .venv\Scripts\python tests/test_phase7_measurement_ab.py
+.venv\Scripts\python -m pytest -q tests/test_phase8_signal_layers.py
 ```
 
 ## API Endpoints

@@ -1,6 +1,6 @@
 # NewsAgents Implementation Phases
 
-Last updated: 2026-03-29 19:24 UTC
+Last updated: 2026-03-29 21:05 UTC
 
 ---
 
@@ -260,6 +260,45 @@ This tracks the implementation of **Phase 1–7** for the "My ET" personalized f
 ---
 
 ## Track B: Corpus and Retrieval (Phases 0–5) — Completed
+
+---
+
+## Track C: Experience Intelligence Layer (5 Steps) — Completed
+
+This tracks the newly delivered user-facing intelligence features that make briefings and feeds more actionable and balanced.
+
+### Step Status Summary
+
+| Step | Feature | Status | Validation |
+|------|---------|--------|------------|
+| **Step 1** | Shared contracts + helper modules | ✅ **COMPLETE** | `tests/test_phase8_signal_layers.py` added (3 tests) |
+| **Step 2** | "So what for me?" + contrarian in Personalised Feed | ✅ **COMPLETE** | Manual UI validation + no editor errors |
+| **Step 3** | Contrarian toggle in News Navigator | ✅ **COMPLETE** | Manual UI validation + no editor errors |
+| **Step 4** | Live Sentiment Pulse in sectioned feed | ✅ **COMPLETE** | Sentiment-focused regression tests passing |
+| **Step 5** | Live Sentiment Pulse in Story Arc (video chapters) | ✅ **COMPLETE** | Sentiment/organization regressions passing |
+
+### Delivered Artifacts
+
+- New models in `src/models.py`
+  - `PersonalImpactSummary`
+  - `ContrarianSummary`
+  - `SentimentPulse`
+- New agent helpers
+  - `src/agents/personal_impact.py`
+  - `src/agents/contrarian_view.py`
+  - `src/agents/sentiment_pulse.py`
+- Streamlit integration
+  - `ui/app.py`
+    - Tab 3 Personalised Feed: "So what for me?", "Hear the other side", section-level pulse
+    - Tab 1 News Navigator: angle-level "Hear the other side"
+    - Tab 4 Vernacular Video: Story Arc live sentiment pulse in chapter view
+
+### Validation Snapshot
+
+- `c:/Users/ayush/Documents/NewsAgents/.venv/Scripts/python.exe -m pytest -q tests/test_phase8_signal_layers.py`
+- `c:/Users/ayush/Documents/NewsAgents/.venv/Scripts/python.exe -m pytest -q tests/test_phase8_signal_layers.py tests/test_phase6_ux_upgrades.py -k "sentiment or organization"`
+
+---
 
 Previous documentation continues below...
 

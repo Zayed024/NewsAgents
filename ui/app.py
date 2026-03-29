@@ -5,6 +5,7 @@ import os
 import asyncio
 import time
 import math
+from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -69,6 +70,82 @@ def run_async(coro):
         return loop.run_until_complete(coro)
     finally:
         loop.close()
+
+
+def infer_text_sentiment(text: str) -> str:
+    """Infer coarse sentiment from text for contrarian framing."""
+    lowered = (text or "").lower()
+    bullish_tokens = ["rally", "surge", "growth", "upside", "beat", "profit", "optimistic"]
+    bearish_tokens = ["decline", "risk", "fall", "loss", "downside", "weak", "concern"]
+    bullish_hits = sum(1 for token in bullish_tokens if token in lowered)
+    bearish_hits = sum(1 for token in bearish_tokens if token in lowered)
+
+    if bullish_hits > bearish_hits:
+        return "bullish"
+    if bearish_hits > bullish_hits:
+        return "bearish"
+    return "neutral"
+
+
+def _parse_dt_for_sort(raw_value: str) -> datetime:
+    """Parse timestamps for recent-first sorting; invalid values map to oldest."""
+    if not raw_value:
+        return datetime.min
+    try:
+        normalized = str(raw_value).replace("Z", "+00:00")
+        return datetime.fromisoformat(normalized)
+    except Exception:
+        return datetime.min
+
+
+def get_recent_items_for_pulse(section_articles: list[dict], window_size: int = 5) -> list[dict]:
+    """Extract recent article dicts from wrapped section items for sentiment pulse."""
+    items = [wrapped.get("item", {}) for wrapped in (section_articles or []) if wrapped.get("item")]
+    sorted_items = sorted(
+        items,
+        key=lambda item: _parse_dt_for_sort(item.get("published_at", "")),
+        reverse=True,
+    )
+    return sorted_items[:max(1, window_size)]
+
+
+def compute_story_arc_pulse(scene_plan):
+    """Compute pulse for story arc using the latest scene sentiments as proxy signals."""
+    if not scene_plan or not getattr(scene_plan, "scenes", None):
+        return None
+
+    from src.agents.sentiment_pulse import compute_sentiment_pulse
+
+    class _Meta:
+        def __init__(self, sentiment: str, credibility_score: float):
+            self.sentiment = sentiment
+            self.credibility_score = credibility_score
+
+    sentiment_map = {
+        "positive": "bullish",
+        "negative": "bearish",
+        "neutral": "neutral",
+        "bullish": "bullish",
+        "bearish": "bearish",
+        "cautious": "neutral",
+    }
+
+    recent_scenes = list(scene_plan.scenes or [])[-5:]
+    synthetic_items = []
+    synthetic_metadata = {}
+
+    for idx, scene in enumerate(recent_scenes):
+        scene_id = f"scene-{idx}"
+        synthetic_items.append({"id": scene_id, "published_at": f"2026-01-01T00:00:0{idx}"})
+        mapped_sentiment = sentiment_map.get((scene.sentiment or "neutral").lower(), "neutral")
+        synthetic_metadata[scene_id] = _Meta(mapped_sentiment, 0.8)
+
+    return compute_sentiment_pulse(
+        topic="story arc",
+        recent_items=synthetic_items,
+        metadata_map=synthetic_metadata,
+        window_size=5,
+    )
 
 
 def build_entity_graph_dot(entity_navigation: dict) -> str:
@@ -548,9 +625,13 @@ with tab1:
         if selected_angle:
             log_angle_click("demo_user", selected_angle, "navigator")
 
+        nav_contrarian_cache = st.session_state.setdefault("phase8_nav_contrarian_cache", {})
+
         # Show synthesis for selected angle
+        selected_synthesis = None
         for synthesis in result.syntheses:
             if synthesis.angle_name == selected_angle:
+                selected_synthesis = synthesis
                 st.subheader(synthesis.angle_name)
                 st.markdown(synthesis.synthesis)
 
@@ -564,6 +645,47 @@ with tab1:
                         for t in synthesis.key_takeaways:
                             st.markdown(f"- {t}")
                 break
+
+        if selected_synthesis:
+            nav_contrarian_key = f"navigator:{selected_synthesis.angle_name}"
+            nav_show_key = f"show_nav_contrarian_{selected_synthesis.angle_name}"
+
+            if st.button("⚖️ Hear the other side", key=f"nav_contrarian_btn_{selected_synthesis.angle_name}"):
+                st.session_state[nav_show_key] = True
+                if nav_contrarian_key not in nav_contrarian_cache:
+                    with st.spinner("Generating a contrarian take for this angle..."):
+                        try:
+                            from src.agents.contrarian_view import generate_contrarian_view
+
+                            synthesis_text = selected_synthesis.synthesis or ""
+                            key_takeaways_text = " ".join(selected_synthesis.key_takeaways or [])
+                            combined_text = f"{synthesis_text}\n{key_takeaways_text}".strip()
+
+                            contrarian_summary = run_async(
+                                generate_contrarian_view(
+                                    item_title=selected_synthesis.angle_name,
+                                    item_text=combined_text,
+                                    current_sentiment=infer_text_sentiment(combined_text),
+                                    session_id="navigator",
+                                )
+                            )
+                            nav_contrarian_cache[nav_contrarian_key] = contrarian_summary.model_dump()
+                        except Exception as e:
+                            st.error(f"Could not generate contrarian view: {e}")
+
+            if st.session_state.get(nav_show_key, False):
+                nav_contrarian = nav_contrarian_cache.get(nav_contrarian_key)
+                if nav_contrarian:
+                    with st.container():
+                        st.markdown("**Contrarian View**")
+                        st.caption(f"Main read: {nav_contrarian.get('primary_take', '')}")
+                        st.markdown(f"- **Other side:** {nav_contrarian.get('other_side_take', '')}")
+                        st.markdown(
+                            f"- **Strongest supporting evidence:** {nav_contrarian.get('strongest_evidence_for_other_side', '')}"
+                        )
+                        st.markdown(
+                            f"- **What would change the view:** {nav_contrarian.get('what_would_change_my_mind', '')}"
+                        )
 
         st.divider()
 
@@ -994,9 +1116,29 @@ with tab3:
             placeholder="Try: market, tax, policy...",
         )
 
+        so_what_cache = st.session_state.setdefault("phase8_so_what_cache", {})
+        contrarian_cache = st.session_state.setdefault("phase8_contrarian_cache", {})
+
         for sec_idx, section in enumerate(organized.sections):
             visible_section = filter_section_by_search(section, section_search) if section_search else section
             section_stats = get_section_summary_stats(visible_section)
+
+            from src.agents.sentiment_pulse import compute_sentiment_pulse
+
+            recent_section_items = get_recent_items_for_pulse(visible_section.articles, window_size=5)
+            section_pulse = compute_sentiment_pulse(
+                topic=visible_section.topic or visible_section.section_name,
+                recent_items=recent_section_items,
+                metadata_map=metadata_map,
+                window_size=5,
+            )
+
+            pulse_icon_map = {
+                "Bullish": "📈",
+                "Cautious": "⚖️",
+                "Bearish": "📉",
+            }
+            pulse_icon = pulse_icon_map.get(section_pulse.label, "⚖️")
             header = (
                 f"{visible_section.section_name} ({visible_section.article_count})"
                 f" · Avg relevance {section_stats.get('avg_relevance', 0):.2f}"
@@ -1006,6 +1148,11 @@ with tab3:
                 if not visible_section.articles:
                     st.caption("No articles match this search in this section.")
                     continue
+
+                st.caption(
+                    f"{pulse_icon} Live Sentiment Pulse: {section_pulse.label}"
+                    f" (n={section_pulse.sample_size}) — {section_pulse.reason_line}"
+                )
 
                 for item_idx, wrapped in enumerate(visible_section.articles):
                     article = wrapped.get("item", {})
@@ -1049,6 +1196,77 @@ with tab3:
                             matched_tags = explanation.get("matched_tags", [])
                             if matched_tags:
                                 st.caption(f"#️⃣ Tags: {' | '.join(matched_tags[:3])}")
+
+                            action_col1, action_col2 = st.columns(2)
+                            so_what_cache_key = f"{selected_profile.user_id}:{article_id}"
+                            contrarian_cache_key = f"{selected_profile.user_id}:{article_id}"
+
+                            with action_col1:
+                                if st.button("✨ So what for me?", key=f"so_what_{key_base}", use_container_width=True):
+                                    st.session_state[f"show_so_what_{key_base}"] = True
+                                    if so_what_cache_key not in so_what_cache:
+                                        with st.spinner("Building a personal impact summary..."):
+                                            try:
+                                                from src.agents.personal_impact import generate_personal_impact
+
+                                                so_what_summary = run_async(
+                                                    generate_personal_impact(
+                                                        profile=selected_profile,
+                                                        item_title=article.get("title", "Untitled"),
+                                                        item_text=article.get("content", ""),
+                                                        session_id=f"feed_{selected_profile.user_id}",
+                                                    )
+                                                )
+                                                so_what_cache[so_what_cache_key] = so_what_summary.model_dump()
+                                            except Exception as e:
+                                                st.error(f"Could not generate personal impact: {e}")
+
+                            with action_col2:
+                                if st.button("⚖️ Hear the other side", key=f"contrarian_{key_base}", use_container_width=True):
+                                    st.session_state[f"show_contrarian_{key_base}"] = True
+                                    if contrarian_cache_key not in contrarian_cache:
+                                        with st.spinner("Generating a contrarian perspective..."):
+                                            try:
+                                                from src.agents.contrarian_view import generate_contrarian_view
+
+                                                contrarian_summary = run_async(
+                                                    generate_contrarian_view(
+                                                        item_title=article.get("title", "Untitled"),
+                                                        item_text=article.get("content", ""),
+                                                        current_sentiment=getattr(metadata, "sentiment", "neutral"),
+                                                        session_id=f"feed_{selected_profile.user_id}",
+                                                    )
+                                                )
+                                                contrarian_cache[contrarian_cache_key] = contrarian_summary.model_dump()
+                                            except Exception as e:
+                                                st.error(f"Could not generate contrarian view: {e}")
+
+                            if st.session_state.get(f"show_so_what_{key_base}", False):
+                                so_what = so_what_cache.get(so_what_cache_key)
+                                if so_what:
+                                    with st.container():
+                                        st.markdown("**So what this means for you**")
+                                        st.caption(so_what.get("headline_impact", ""))
+                                        for point in so_what.get("bullet_points", [])[:3]:
+                                            st.markdown(f"- {point}")
+                                        st.caption(
+                                            f"Confidence: {(so_what.get('confidence', 'medium') or 'medium').title()}"
+                                            f" | Caveat: {so_what.get('caveat', 'Validate with fresh disclosures.')}"
+                                        )
+
+                            if st.session_state.get(f"show_contrarian_{key_base}", False):
+                                contrarian = contrarian_cache.get(contrarian_cache_key)
+                                if contrarian:
+                                    with st.container():
+                                        st.markdown("**Contrarian View**")
+                                        st.caption(f"Main read: {contrarian.get('primary_take', '')}")
+                                        st.markdown(f"- **Other side:** {contrarian.get('other_side_take', '')}")
+                                        st.markdown(
+                                            f"- **Strongest supporting evidence:** {contrarian.get('strongest_evidence_for_other_side', '')}"
+                                        )
+                                        st.markdown(
+                                            f"- **What would change the view:** {contrarian.get('what_would_change_my_mind', '')}"
+                                        )
 
                         with feed_card_col2:
                             st.markdown("")
@@ -1301,6 +1519,19 @@ with tab4:
 
         if result.scene_plan and result.scene_plan.scenes:
             with st.expander(f"Story Chapters ({len(result.scene_plan.scenes)})", expanded=True):
+                story_pulse = compute_story_arc_pulse(result.scene_plan)
+                if story_pulse:
+                    pulse_icon_map = {
+                        "Bullish": "📈",
+                        "Cautious": "⚖️",
+                        "Bearish": "📉",
+                    }
+                    pulse_icon = pulse_icon_map.get(story_pulse.label, "⚖️")
+                    st.caption(
+                        f"{pulse_icon} Live Sentiment Pulse: {story_pulse.label}"
+                        f" (n={story_pulse.sample_size}) — {story_pulse.reason_line}"
+                    )
+
                 if result.scene_plan.story_arc_summary:
                     st.info(f"Story arc: {result.scene_plan.story_arc_summary}")
                 if result.scene_plan.key_players:

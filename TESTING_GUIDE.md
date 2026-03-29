@@ -1,6 +1,6 @@
-# End-to-End Testing Guide: My ET Personalized Feed (Phases 1-5)
+# End-to-End Testing Guide: My ET Personalized Feed + Experience Intelligence Layer
 
-**Overview**: This guide covers how to test all 5 completed phases of the "My ET" personalized newsroom feature, from user creation through adaptive ranking.
+**Overview**: This guide covers testing for the My ET personalized newsroom feature and the new Experience Intelligence Layer (So What, Contrarian View, Live Sentiment Pulse) across UI tabs.
 
 ---
 
@@ -24,6 +24,114 @@ python tests/test_phase5_adaptive_learning.py   # 8/8 tests
 ```
 
 **Expected**: All 35 tests passing ✅
+
+---
+
+## Experience Intelligence Layer: Full UI Test Procedure
+
+This is the complete manual runbook for the 5-step rollout that was just implemented.
+
+### Prerequisites
+
+1. Start backend API.
+2. Start Streamlit UI.
+3. Ensure at least one user profile exists (Tab 2) and feed generation works.
+
+Use these commands on Windows:
+
+```bash
+uvicorn src.api.main:app --reload --port 8000
+streamlit run ui/app.py
+```
+
+Optional focused regression check before manual run:
+
+```bash
+c:/Users/ayush/Documents/NewsAgents/.venv/Scripts/python.exe -m pytest -q tests/test_phase8_signal_layers.py
+```
+
+### Step-by-Step Manual Validation
+
+### Step 1: Validate Personalised Feed "So what for me?"
+
+1. Open Tab 3: Personalised Feed.
+2. Select any existing profile from the dropdown.
+3. Click Generate My Feed.
+4. In any article card, click ✨ So what for me?.
+5. Confirm output panel appears below the card with:
+   - one headline impact line,
+   - exactly 3 bullets,
+   - confidence and caveat line.
+6. Click the same button again and verify result returns quickly (cached behavior, no visible regeneration delay).
+
+Expected result:
+- Personal impact summary is specific to the selected profile context.
+- No page crashes even if model call fails.
+
+### Step 2: Validate Personalised Feed "Hear the other side"
+
+1. Stay in Tab 3 with generated feed.
+2. Click ⚖️ Hear the other side on any article card.
+3. Confirm panel includes:
+   - Main read,
+   - Other side,
+   - Strongest supporting evidence,
+   - What would change the view.
+4. Repeat on another card to verify per-article behavior.
+
+Expected result:
+- Contrarian response is coherent and opposite-side aware.
+- Previously opened card response reopens quickly due to session cache.
+
+### Step 3: Validate News Navigator Contrarian Toggle
+
+1. Open Tab 1: News Navigator.
+2. Generate Briefing if not already generated.
+3. Select any angle from the radio selector.
+4. Click ⚖️ Hear the other side under the selected angle synthesis.
+5. Confirm the same 4-part contrarian structure renders.
+6. Switch to another angle and repeat.
+
+Expected result:
+- Contrarian output is angle-aware.
+- Reopening same angle contrarian panel is fast (cached per angle).
+
+### Step 4: Validate Section-Level Live Sentiment Pulse in Feed
+
+1. Return to Tab 3.
+2. Generate My Feed.
+3. Open each section in Sectioned Feed.
+4. For each section, verify presence of line:
+   - icon (📈/⚖️/📉),
+   - label (Bullish/Cautious/Bearish),
+   - sample size n,
+   - one-line reason.
+5. Use Search within your feed and verify pulse still appears for visible sections.
+
+Expected result:
+- Pulse reflects up to last 5 recent items in that section.
+- With smaller sections, sample size decreases gracefully.
+
+### Step 5: Validate Story Arc Live Sentiment Pulse
+
+1. Open Tab 4: Vernacular Video.
+2. Click Generate Video.
+3. Open Story Chapters expander once output appears.
+4. Verify a Live Sentiment Pulse line appears above story arc details.
+5. Check it includes icon, label, sample size, and reason.
+
+Expected result:
+- Story arc pulse renders whenever scene plan exists.
+- No impact on video/audio rendering behavior.
+
+### End-to-End Acceptance Checklist
+
+- So What panel works in Personalised Feed cards.
+- Contrarian panel works in Personalised Feed cards.
+- Contrarian panel works in News Navigator angles.
+- Live Sentiment Pulse appears in each Personalised Feed section.
+- Live Sentiment Pulse appears in Story Chapters under Vernacular Video.
+- Existing feedback loop and A/B comparison controls still function.
 
 ---
 
