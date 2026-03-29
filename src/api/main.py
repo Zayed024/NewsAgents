@@ -30,6 +30,16 @@ from src.tools.corpus.operations import (
     run_subset_refresh,
 )
 from src.tools.corpus.compliance import generate_compliance_report, load_compliance_snapshots
+from src.agents.onboarding import (
+    QUICK_START_QUESTIONS, DEEP_SETUP_QUESTIONS,
+    answers_to_user_profile, save_user_profile, load_user_by_id, list_all_user_profiles
+)
+from src.agents.corpus_personalizer import profile_to_crawl_queries, profile_to_subset_tags
+from src.agents.profile_subset_builder import get_articles_for_user
+from src.agents.persona_feed.pipeline import generate_persona_feed
+from src.agents.personalized_feed_pipeline import (
+    generate_personalized_user_feed, compare_personalized_vs_baseline
+)
 
 app = FastAPI(
     title="ET AI News Navigator",
@@ -112,6 +122,179 @@ async def compare_feeds(request: FeedCompareRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# --- Phase 2: Profile-Aware Personalized Feed ---
+
+class PersonalizedFeedRequest(BaseModel):
+    user_id: str
+    max_items: int = 10
+
+
+class PersonalizedFeedResponse(BaseModel):
+    user_id: str
+    user_name: str
+    article_count: int
+    articles: list[dict]
+    crawl_intents: dict
+    subset_tags: dict
+
+
+@app.post("/api/v1/feed/personalized", response_model=PersonalizedFeedResponse)
+async def get_personalized_feed(request: PersonalizedFeedRequest):
+    """Get a personalized feed for a specific user (Phase 2).
+    
+    Uses profile-driven corpus retrieval to show highly relevant articles.
+    Articles are filtered and tagged based on user's interests, experience, and role.
+    """
+    try:
+        # Load user profile
+        profile = load_user_by_id(request.user_id)
+        if not profile:
+            raise HTTPException(status_code=404, detail=f"User {request.user_id} not found")
+        
+        # Get articles
+        all_articles = load_homepage_articles(max_items=50)
+        
+        # Get personalized subset using profile
+        articles = get_articles_for_user(
+            user_id=request.user_id,
+            all_articles=[a.model_dump() for a in all_articles],
+            profile=profile,
+            use_cache=True,
+            max_items=request.max_items,
+        )
+        
+        # Get corpus intents for response
+        crawl_intents = profile_to_crawl_queries(profile)
+        subset_tags = profile_to_subset_tags(profile)
+        
+        return PersonalizedFeedResponse(
+            user_id=request.user_id,
+            user_name=profile.name,
+            article_count=len(articles),
+            articles=articles,
+            crawl_intents=crawl_intents,
+            subset_tags=subset_tags,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Phase 3: Single-User Personalized Feed (Fully Adapted) ---
+
+class FullPersonalizedFeedRequest(BaseModel):
+    user_id: str
+    use_personalized_subset: bool = True
+    max_items: int = 5
+
+
+class FullPersonalizedFeedResponse(BaseModel):
+    user_id: str
+    user_name: str
+    feed_items: list[dict]
+    explanations: list[dict]  # Why each article, relevance, confidence, matched tags
+    personalization_method: str
+    total_items: int
+
+
+@app.post("/api/v1/feed/personalized-full", response_model=FullPersonalizedFeedResponse)
+async def get_full_personalized_feed(request: FullPersonalizedFeedRequest):
+    """Get a fully personalized feed for a user (Phase 3).
+    
+    Full pipeline:
+    1. Get personalized corpus subset (Phase 2: interest-filtered)
+    2. Analyze profile preferences (profiler)
+    3. Rank articles by relevance (ranker)
+    4. Adapt articles to user's depth/format (adapter)
+    5. Explain: why each article, confidence, matched tags
+    
+    This is the production feed endpoint.
+    """
+    try:
+        # Load user profile
+        profile = load_user_by_id(request.user_id)
+        if not profile:
+            raise HTTPException(status_code=404, detail=f"User {request.user_id} not found")
+        
+        # Get articles
+        all_articles = load_homepage_articles(max_items=50)
+        
+        # Run full personalized feed pipeline
+        result = await generate_personalized_user_feed(
+            user_id=request.user_id,
+            profile=profile,
+            all_articles=all_articles,
+            session_id=f"feed_{request.user_id}",
+            use_personalized_subset=request.use_personalized_subset,
+            top_n=request.max_items,
+        )
+        
+        feed = result["feed"]
+        explanations = result["explanations"]
+        
+        return FullPersonalizedFeedResponse(
+            user_id=request.user_id,
+            user_name=profile.name,
+            feed_items=[item.model_dump() for item in feed.feed_items],
+            explanations=explanations,
+            personalization_method=result["personalization_method"],
+            total_items=len(feed.feed_items),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class FeedComparisonRequest(BaseModel):
+    user_id: str
+
+
+class FeedComparisonResultResponse(BaseModel):
+    user_id: str
+    user_name: str
+    personalized_items: list[dict]
+    baseline_items: list[dict]
+    delta_metrics: dict
+
+
+@app.post("/api/v1/feed/comparison-test", response_model=FeedComparisonResultResponse)
+async def run_feed_ab_test(request: FeedComparisonRequest):
+    """Run A/B test: personalized feed vs. baseline ranking (Phase 3).
+    
+    Returns both feeds side-by-side for measurement of engagement differences.
+    """
+    try:
+        # Load user profile
+        profile = load_user_by_id(request.user_id)
+        if not profile:
+            raise HTTPException(status_code=404, detail=f"User {request.user_id} not found")
+        
+        # Get articles
+        all_articles = load_homepage_articles(max_items=50)
+        
+        # Run comparison
+        result = await compare_personalized_vs_baseline(
+            user_id=request.user_id,
+            profile=profile,
+            all_articles=all_articles,
+            session_id=f"feed_test_{request.user_id}",
+        )
+        
+        return FeedComparisonResultResponse(
+            user_id=request.user_id,
+            user_name=profile.name,
+            personalized_items=[item.model_dump() for item in result["personalized_feed"].feed_items],
+            baseline_items=[item.model_dump() for item in result["baseline_feed"].feed_items],
+            delta_metrics=result["delta_metrics"],
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # --- Scenario 3: Vernacular Video ---
 
 class VideoRequest(BaseModel):
@@ -165,6 +348,103 @@ async def list_articles(source: str = "budget"):
     else:
         articles = []
     return {"count": len(articles), "articles": [a.model_dump() for a in articles]}
+
+
+# --- User Management / Phase 1 Onboarding ---
+
+class OnboardingQuestionsResponse(BaseModel):
+    quick_start: list[dict]
+    deep_setup: list[dict]
+
+
+class CreateUserRequest(BaseModel):
+    name: str
+    quick_start_answers: dict  # question_id -> answer(s)
+    is_deep_setup: bool = False
+    deep_setup_answers: dict = {}  # question_id -> answer(s) if is_deep_setup=True
+
+
+class CreateUserResponse(BaseModel):
+    user_id: str
+    name: str
+    role: str
+    reading_level: str
+    preferred_format: str
+    priority_topics: list[str]
+    message: str
+
+
+@app.get("/api/v1/onboarding/questions")
+async def get_onboarding_questions():
+    """Get all available onboarding questions."""
+    return OnboardingQuestionsResponse(
+        quick_start=QUICK_START_QUESTIONS,
+        deep_setup=DEEP_SETUP_QUESTIONS,
+    )
+
+
+@app.post("/api/v1/users/create", response_model=CreateUserResponse)
+async def create_user(request: CreateUserRequest):
+    """Create a new user profile from onboarding answers."""
+    try:
+        import uuid
+        
+        # Generate unique user_id
+        user_id = f"user-{uuid.uuid4().hex[:8]}"
+        
+        # Combine all answers
+        all_answers = {**request.quick_start_answers}
+        if request.is_deep_setup:
+            all_answers.update(request.deep_setup_answers)
+        
+        # Convert to user profile
+        profile = answers_to_user_profile(
+            user_id=user_id,
+            name=request.name,
+            answers=all_answers,
+            is_deep_setup=request.is_deep_setup,
+        )
+        
+        # Save to disk
+        success = save_user_profile(profile)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to save user profile")
+        
+        return CreateUserResponse(
+            user_id=user_id,
+            name=profile.name,
+            role=profile.role,
+            reading_level=profile.reading_level,
+            preferred_format=profile.preferred_format,
+            priority_topics=profile.interests,
+            message=f"Welcome, {request.name}! Your personalized feed is ready.",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/users")
+async def list_users():
+    """List all saved user profiles."""
+    try:
+        users = list_all_user_profiles()
+        return {"count": len(users), "users": users}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/users/{user_id}")
+async def get_user(user_id: str):
+    """Get a specific user profile."""
+    try:
+        profile = load_user_by_id(user_id)
+        if not profile:
+            raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+        return profile.model_dump()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # --- Operations / Freshness (Phase 4) ---

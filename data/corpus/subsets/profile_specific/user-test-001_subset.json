@@ -1,0 +1,115 @@
+{
+  "user_id": "user-test-001",
+  "user_name": "Test User",
+  "subset_generated_at": "2026-03-29T19:26:27.498465",
+  "crawl_intents": {
+    "keywords": [
+      "amc",
+      "benchmark",
+      "budget",
+      "equity",
+      "etf",
+      "fiscal policy",
+      "gdp",
+      "index",
+      "index fund",
+      "inflation",
+      "macro",
+      "monetary policy",
+      "mutual fund",
+      "nav",
+      "nft",
+      "rbi",
+      "share",
+      "sip",
+      "stock"
+    ],
+    "sectors": [
+      "banking",
+      "healthcare",
+      "infrastructure",
+      "manufacturing",
+      "technology"
+    ],
+    "intent_types": [
+      "news",
+      "market_move",
+      "portfolio_action"
+    ],
+    "profile_segment": "salaried_intermediate"
+  },
+  "subset_tags": {
+    "relevance_topic": "Mutual funds & passive investing,Macro policy & economy",
+    "audience_level": "intermediate",
+    "intent_type": "market_move",
+    "content_filter": "balanced",
+    "language_preference": "English"
+  },
+  "selected_count": 2,
+  "selected_ids": [
+    "art-001",
+    "art-003"
+  ],
+  "total_available": 3,
+  "filter_criteria": {
+    "keywords": [
+      "amc",
+      "benchmark",
+      "budget",
+      "equity",
+      "etf",
+      "fiscal policy",
+      "gdp",
+      "index",
+      "index fund",
+      "inflation",
+      "macro",
+      "monetary policy",
+      "mutual fund",
+      "nav",
+      "nft",
+      "rbi",
+      "share",
+      "sip",
+      "stock"
+    ],
+    "sectors": [
+      "banking",
+      "healthcare",
+      "infrastructure",
+      "manufacturing",
+      "technology"
+    ],
+    "intent_types": [
+      "news",
+      "market_move",
+      "portfolio_action"
+    ]
+  },
+  "articles": [
+    {
+      "id": "art-001",
+      "title": "Mutual Fund NAV Updates",
+      "content": "Latest NAV updates for mutual funds and index funds",
+      "tags": [
+        "audience:intermediate",
+        "intent:market_move",
+        "mutual-fund",
+        "nav",
+        "relevance:high"
+      ]
+    },
+    {
+      "id": "art-003",
+      "title": "GDP Growth and Inflation",
+      "content": "Latest macro economic data on gdp inflation and monetary policy",
+      "tags": [
+        "audience:intermediate",
+        "gdp",
+        "intent:market_move",
+        "macro",
+        "relevance:high"
+      ]
+    }
+  ]
+}

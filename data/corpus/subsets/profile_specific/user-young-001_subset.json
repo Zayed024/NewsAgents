@@ -1,0 +1,361 @@
+{
+  "user_id": "user-young-001",
+  "user_name": "Priya Sharma",
+  "subset_generated_at": "2026-03-29T19:38:58.237328",
+  "crawl_intents": {
+    "keywords": [],
+    "sectors": [],
+    "intent_types": [],
+    "profile_segment": "software_beginner"
+  },
+  "subset_tags": {
+    "relevance_topic": "SIPs,tax saving,tech stocks",
+    "audience_level": "beginner",
+    "intent_type": "news",
+    "content_filter": "balanced",
+    "language_preference": "English"
+  },
+  "selected_count": 15,
+  "selected_ids": [
+    "home-001",
+    "home-002",
+    "home-003",
+    "home-004",
+    "home-005",
+    "home-006",
+    "home-007",
+    "home-008",
+    "home-009",
+    "home-010",
+    "home-011",
+    "home-012",
+    "home-013",
+    "home-014",
+    "home-015"
+  ],
+  "total_available": 15,
+  "filter_criteria": {
+    "keywords": [],
+    "sectors": [],
+    "intent_types": []
+  },
+  "articles": [
+    {
+      "id": "home-001",
+      "title": "RBI Cuts Repo Rate by 25 bps to 6.0%: EMIs Set to Fall, Growth Push Expected",
+      "published_at": "2026-03-26T07:30:00+05:30",
+      "category": "macro",
+      "content": "The Reserve Bank of India on Thursday cut the benchmark repo rate by 25 basis points to 6.0%, marking the second consecutive reduction this calendar year as the central bank prioritises growth amid moderating inflation. The decision, taken unanimously by the six-member Monetary Policy Committee, brings the repo rate to its lowest level since early 2023.\n\nRBI Governor Sanjay Malhotra said the move was guided by a favourable inflation trajectory, with consumer price inflation holding steady at 4.2% in February, well within the central bank's 2-6% tolerance band. \"The balance of risks has shifted decisively in favour of supporting growth,\" Malhotra said during the post-policy press conference.\n\nThe rate cut is expected to translate into lower equated monthly instalments for borrowers across home loans, auto loans and personal credit lines. Banks are widely expected to pass on the reduction within the next four to six weeks. SBI and HDFC Bank have already signalled they will revise their marginal cost of lending rates in the coming fortnight.\n\nFor corporate India, the cheaper cost of capital could accelerate investment in capacity expansion, particularly in manufacturing and infrastructure sectors where order books have been swelling. Chief financial officers at several large conglomerates told ET they would revisit their borrowing plans in light of the cut.\n\nThe central bank also revised its GDP growth forecast for FY27 upward to 7.0% from 6.8% projected in February, citing robust domestic demand, a revival in private capital expenditure and strong services exports. However, Malhotra cautioned that global headwinds, including geopolitical tensions and volatile commodity prices, remain key risks to the outlook.\n\nBond markets rallied sharply following the announcement, with the benchmark 10-year government security yield dropping 8 basis points to 6.72%.",
+      "author": "ET Bureau",
+      "tags": [
+        "EMI",
+        "GDP growth",
+        "RBI",
+        "audience:beginner",
+        "inflation",
+        "intent:news",
+        "interest rates",
+        "monetary policy",
+        "relevance:low",
+        "repo rate"
+      ],
+      "url": "https://economictimes.indiatimes.com/news/economy/policy/rbi-cuts-repo-rate-25-bps-to-6-percent/articleshow/120384521.cms"
+    },
+    {
+      "id": "home-002",
+      "title": "Sensex Breaches 85,000 for First Time Ever; Nifty Tops 25,800 on RBI Rate Cut Cheer",
+      "published_at": "2026-03-26T10:15:00+05:30",
+      "category": "markets",
+      "content": "Indian benchmark indices scripted history on Thursday as the BSE Sensex surged past the 85,000 mark for the first time, powered by broad-based buying after the RBI's decision to cut the repo rate by 25 basis points. The 30-share index jumped 612 points, or 0.72%, to hit an intraday high of 85,143.67 before settling at 85,078.32.\n\nThe NSE Nifty50 also hit a fresh record, crossing the 25,800 level with a gain of 178 points. All sectoral indices ended in the green, with the Nifty Bank index leading the charge with a 1.4% rally as rate-sensitive banking and housing finance stocks surged.\n\nHDFC Bank, ICICI Bank and SBI were the top contributors to the Sensex rally, collectively adding over 280 points to the index. Real estate stocks were among the biggest gainers, with DLF climbing 3.8% and Godrej Properties advancing 4.1% as cheaper home loans are expected to boost housing demand.\n\nForeign institutional investors turned net buyers for the fifth consecutive session, pumping in Rs 3,247 crore into Indian equities on Thursday. Analysts said the sustained FII inflows reflect growing global confidence in India's growth story.\n\n\"The combination of a supportive monetary policy, strong corporate earnings and improving macroeconomic fundamentals makes Indian equities attractive at current levels,\" said Ridham Desai, managing director at Morgan Stanley India. \"We see the Sensex reaching 90,000 by December 2026.\"\n\nMarket breadth was decisively positive, with 2,187 stocks advancing against 814 declines on the BSE. The India VIX, a measure of market volatility, fell 5.2% to 12.34, suggesting traders expect calm conditions ahead.\n\nSmall-cap and mid-cap indices also participated in the rally, gaining 0.9% and 1.1% respectively, allaying concerns about a narrow market rally concentrated in large-caps.",
+      "author": "Rakesh Patil",
+      "tags": [
+        "FII",
+        "Nifty",
+        "Sensex",
+        "all-time high",
+        "audience:beginner",
+        "banking stocks",
+        "intent:news",
+        "rate cut rally",
+        "relevance:low",
+        "stock market"
+      ],
+      "url": "https://economictimes.indiatimes.com/markets/stocks/news/sensex-breaches-85000-nifty-tops-25800-rbi-rate-cut/articleshow/120385102.cms"
+    },
+    {
+      "id": "home-003",
+      "title": "Best SIPs for Beginners in 2026: How to Start Your Mutual Fund Journey with Confidence",
+      "published_at": "2026-03-26T08:00:00+05:30",
+      "category": "personal_finance",
+      "content": "If you are new to investing and wondering where to put your money in 2026, systematic investment plans remain the most accessible and disciplined route into the equity markets. With markets hitting new highs, the temptation to time entries can be strong, but financial advisors unanimously recommend that beginners stick to SIPs and let rupee cost averaging work in their favour.\n\nFor first-time investors, large-cap and flexi-cap funds offer the best starting point. Large-cap funds invest in well-established companies with proven track records, offering relatively lower volatility compared to mid-cap or small-cap peers. Flexi-cap funds give fund managers the freedom to allocate across market capitalisations based on where they see the best opportunities.\n\nAmong large-cap options, the Mirae Asset Large Cap Fund and ICICI Prudential Bluechip Fund have consistently delivered above-benchmark returns over three- and five-year horizons. Both funds carry moderate expense ratios and have experienced fund management teams.\n\nFor those who prefer a set-it-and-forget-it approach, index funds tracking the Nifty50 or Sensex are excellent choices. The UTI Nifty50 Index Fund and HDFC Index Fund Sensex offer near-zero tracking error at expense ratios as low as 0.10%, making them among the cheapest ways to gain equity exposure.\n\nFinancial planner Nisreen Mamaji of MoneyWorks4Me recommends that beginners start with just two funds: one large-cap or index fund and one flexi-cap fund. \"Overcomplicating your portfolio at the start is a common mistake. Two well-chosen funds with a monthly SIP of even Rs 2,000 can build meaningful wealth over a decade,\" she said.\n\nThe key, experts say, is consistency. Missing SIP instalments during market corrections is the single biggest wealth destroyer for retail investors. Automating your SIP via bank mandate ensures discipline regardless of market sentiment.",
+      "author": "Preeti Kulkarni",
+      "tags": [
+        "SIP",
+        "audience:beginner",
+        "beginners",
+        "flexi-cap",
+        "index funds",
+        "intent:news",
+        "investing",
+        "large-cap",
+        "mutual funds",
+        "relevance:low"
+      ],
+      "url": "https://economictimes.indiatimes.com/mf/analysis/best-sips-for-beginners-2026-mutual-fund-journey/articleshow/120383890.cms"
+    },
+    {
+      "id": "home-004",
+      "title": "IT Sector Q4 Preview: TCS, Infosys, Wipro Expected to Report Muted Revenue Growth",
+      "published_at": "2026-03-26T09:45:00+05:30",
+      "category": "tech",
+      "content": "India's top IT services companies are likely to report another quarter of subdued revenue growth when they announce January-March results next month, though analysts see early signs of a demand recovery that could materialise in the second half of FY27.\n\nTCS, the sector bellwether, is expected to post constant currency revenue growth of 1.2-1.8% quarter-on-quarter, according to a consensus of 14 brokerages polled by ET. Infosys is likely to report slightly better growth of 1.5-2.0%, aided by ramp-ups in recent mega-deal wins. Wipro and HCL Technologies are projected to deliver growth in the 0.8-1.5% range.\n\nThe muted topline performance reflects continued caution among global enterprises, particularly in the banking, financial services and insurance vertical, which accounts for nearly 30% of aggregate sector revenue. Discretionary spending on digital transformation projects remains under pressure as clients in North America and Europe navigate an uncertain macroeconomic environment.\n\n\"We are past the trough, but the recovery is more of a gentle slope than a sharp V-shape,\" said Kawaljeet Saluja, analyst at Kotak Institutional Equities. \"Deal pipelines are improving but conversion timelines have elongated. Large deals are taking 6-9 months longer to close than they did in 2022-23.\"\n\nOn the margins front, wage hikes effective from January are expected to create a 50-80 basis point headwind for most companies. However, rupee depreciation and improving utilisation rates should partially offset the impact. TCS is expected to report EBIT margins of 25.8-26.2%, while Infosys may come in at 21.0-21.5%.\n\nInvestors will watch closely for management commentary on deal pipelines, client spending intentions for calendar year 2026, and any impact from the growing adoption of generative AI tools on services demand. Several companies have flagged GenAI as both an opportunity and a risk, with potential cannibalisation of lower-end testing and maintenance work.",
+      "author": "Jochelle Mendonca",
+      "tags": [
+        "GenAI",
+        "HCL",
+        "IT sector",
+        "Infosys",
+        "Q4 results",
+        "TCS",
+        "Wipro",
+        "audience:beginner",
+        "intent:news",
+        "relevance:low",
+        "revenue growth"
+      ],
+      "url": "https://economictimes.indiatimes.com/tech/information-tech/it-sector-q4-preview-tcs-infosys-wipro-muted-growth/articleshow/120384198.cms"
+    },
+    {
+      "id": "home-005",
+      "title": "New Tax Regime vs Old: Which One Saves You More Money in FY26? A Detailed Comparison",
+      "published_at": "2026-03-26T06:30:00+05:30",
+      "category": "personal_finance",
+      "content": "With the financial year drawing to a close, salaried individuals face the annual dilemma of choosing between the new and old income tax regimes. The decision has become more nuanced after the government sweetened the new regime in Budget 2025, raising the basic exemption limit and widening tax slabs.\n\nUnder the revised new regime, income up to Rs 4 lakh is fully exempt, and the effective tax-free threshold rises to Rs 12 lakh when the standard deduction of Rs 75,000 and the rebate under Section 87A are factored in. Tax rates range from 5% to 30% across six slabs, with the top rate kicking in only above Rs 24 lakh.\n\nThe old regime, meanwhile, retains the original slab structure with a basic exemption of Rs 2.5 lakh and a top rate of 30% above Rs 10 lakh. Its appeal lies in the suite of deductions available: Section 80C (up to Rs 1.5 lakh), Section 80D for health insurance premiums, HRA exemption, home loan interest under Section 24, and NPS contributions under Section 80CCD.\n\nTax advisor Archit Gupta, founder of ClearTax, says the break-even point has shifted. \"If your total deductions and exemptions exceed roughly Rs 3.75 lakh per annum, the old regime may still save you more tax. Below that threshold, the new regime is almost certainly better,\" he explained.\n\nFor a salaried professional earning Rs 15 lakh annually, the new regime results in a tax liability of approximately Rs 1.35 lakh, compared to Rs 1.56 lakh under the old regime assuming standard deductions of Rs 2.5 lakh. However, someone earning the same amount but claiming deductions of Rs 4 lakh or more could save Rs 20,000-30,000 by staying with the old regime.\n\nExperts advise taxpayers to run the numbers for their specific situation rather than relying on general guidance. Several free online calculators, including those offered by the Income Tax Department and major tax-filing platforms, can compare liabilities under both regimes in minutes.",
+      "author": "Babar Zaidi",
+      "tags": [
+        "FY26",
+        "Section 80C",
+        "audience:beginner",
+        "income tax",
+        "intent:news",
+        "new tax regime",
+        "old tax regime",
+        "relevance:low",
+        "tax planning",
+        "tax saving"
+      ],
+      "url": "https://economictimes.indiatimes.com/wealth/tax/new-tax-regime-vs-old-which-saves-more-fy26/articleshow/120383445.cms"
+    },
+    {
+      "id": "home-006",
+      "title": "India's GDP Growth Revised Upward to 6.9% for FY26 as Consumption, Investment Pick Up",
+      "published_at": "2026-03-26T11:00:00+05:30",
+      "category": "macro",
+      "content": "India's economic growth is set to come in stronger than initially estimated, with the National Statistical Office on Thursday revising the GDP growth projection for FY26 upward to 6.9% from the advance estimate of 6.5% released in January. The revision, based on updated quarterly data, confirms India's position as the fastest-growing major economy.\n\nThe upward revision was driven by a broad-based recovery in domestic consumption and a sustained pickup in fixed investment. Private final consumption expenditure, the single largest component of GDP, grew 7.4% in real terms during the first three quarters of FY26, up from 6.1% in the corresponding period of FY25. Government capital expenditure also exceeded budgeted targets, growing 18.2% year-on-year.\n\nChief Economic Advisor V. Anantha Nageswaran said the data vindicates the government's strategy of front-loading infrastructure spending while keeping the fiscal deficit on a glide path toward the 4.5% of GDP target. \"The multiplier effects of public capex are now visible in private sector activity,\" he told reporters.\n\nThe manufacturing sector was a standout performer, with gross value added growing 8.1% in the October-December quarter, the fastest pace in seven quarters. This was supported by robust demand for automobiles, consumer durables and construction materials.\n\nAgriculture growth remained steady at 3.8%, aided by a normal monsoon and strong rabi crop prospects. The services sector, which accounts for over 55% of GDP, expanded 7.2% driven by financial services, real estate and IT-BPM.\n\nHowever, economists cautioned that the external environment poses risks. Global trade tensions, volatile crude oil prices and the possibility of a US recession could weigh on export growth and foreign investment flows in FY27. India's merchandise exports contracted 2.1% in the first eleven months of FY26, partly offset by robust services exports.",
+      "author": "Deepshikha Sikarwar",
+      "tags": [
+        "FY26",
+        "GDP growth",
+        "Indian economy",
+        "NSO",
+        "audience:beginner",
+        "capex",
+        "consumption",
+        "intent:news",
+        "manufacturing",
+        "relevance:low"
+      ],
+      "url": "https://economictimes.indiatimes.com/news/economy/indicators/india-gdp-growth-revised-upward-6-9-percent-fy26/articleshow/120385678.cms"
+    },
+    {
+      "id": "home-007",
+      "title": "Pharma Stocks Under Pressure as CDSCO Tightens Quality Norms for Generic Drug Makers",
+      "published_at": "2026-03-26T12:30:00+05:30",
+      "category": "sector",
+      "content": "Shares of Indian pharmaceutical companies came under selling pressure on Thursday after the Central Drugs Standard Control Organisation announced sweeping changes to quality compliance requirements for domestic generic drug manufacturers. The Nifty Pharma index fell 1.8%, bucking the broader market's bullish trend.\n\nThe new regulations, effective from July 1, mandate that all drug manufacturing facilities undergo annual third-party quality audits conducted by CDSCO-empanelled agencies. Currently, inspections are conducted on a risk-based schedule, with many facilities going two to three years between regulatory visits. The change brings India's oversight framework closer to the stringent standards maintained by the US FDA and European Medicines Agency.\n\nAdditionally, the CDSCO has introduced mandatory stability testing protocols for all generic formulations, requiring manufacturers to demonstrate product efficacy throughout the stated shelf life under accelerated storage conditions. Companies will have an 18-month transition period to comply.\n\nIndustry body the Indian Pharmaceutical Alliance estimated that the new norms could increase compliance costs by 8-12% for mid-sized drug makers. Larger companies like Sun Pharma, Dr Reddy's and Cipla, which already adhere to global standards for their export-oriented facilities, are expected to see a more modest cost impact of 3-5%.\n\n\"This is a positive structural change for the industry in the long run, even though there will be near-term cost pressures,\" said Surjit Pal, pharma analyst at Prabhudas Lilladher. \"Companies with robust quality systems will gain market share as smaller, non-compliant players are forced to upgrade or exit.\"\n\nSun Pharma fell 1.2%, Cipla dropped 2.1% and Lupin declined 2.8% in Thursday's session. Mid-cap pharma stocks bore the brunt, with Alkem Laboratories and Torrent Pharmaceuticals falling over 3% each.\n\nThe Indian pharmaceutical industry, valued at $55 billion, is the world's largest supplier of generic medicines by volume. Quality concerns have periodically dented the sector's reputation, with several facilities receiving US FDA warning letters in recent years.",
+      "author": "Vikas Dandekar",
+      "tags": [
+        "CDSCO",
+        "Cipla",
+        "Sun Pharma",
+        "audience:beginner",
+        "generic drugs",
+        "intent:news",
+        "pharma",
+        "quality compliance",
+        "regulation",
+        "relevance:low"
+      ],
+      "url": "https://economictimes.indiatimes.com/industry/healthcare/pharma-stocks-pressure-cdsco-quality-norms-generic/articleshow/120386012.cms"
+    },
+    {
+      "id": "home-008",
+      "title": "How to Start Investing with Just Rs 500 a Month: A Step-by-Step Guide for Young Earners",
+      "published_at": "2026-03-26T07:00:00+05:30",
+      "category": "personal_finance",
+      "content": "You do not need a large salary or a lump sum to begin building wealth. With as little as Rs 500 a month, anyone with a bank account and a PAN card can start investing in mutual funds through a systematic investment plan. Here is a practical, no-jargon guide to getting started.\n\nStep one is to complete your KYC. This can now be done entirely online through the Central KYC Registry or via any mutual fund distributor's app. You will need your Aadhaar number, PAN card and a selfie. The process takes under 10 minutes and is a one-time requirement.\n\nStep two is choosing the right fund. For someone investing Rs 500-2,000 per month, simplicity is paramount. A single Nifty50 index fund gives you ownership in India's 50 largest companies at a rock-bottom cost. The annual expense ratio on most Nifty50 index funds is just 0.10-0.20%, meaning nearly all your money goes to work in the market.\n\nStep three is setting up your SIP. Most fund houses and platforms like Groww, Zerodha Coin, Kuvera and ET Money allow you to start a SIP with Rs 500. Choose a date that falls a day or two after your salary credit date, and opt for auto-debit from your bank account. This removes the need for manual action each month.\n\nStep four, and perhaps the most important, is to stay invested. A Rs 500 monthly SIP in a Nifty50 index fund, assuming a conservative 12% annual return, would grow to approximately Rs 1.18 lakh in 10 years and Rs 5.05 lakh in 20 years. The power of compounding becomes dramatic over longer horizons.\n\nCommon beginner mistakes to avoid include checking your portfolio daily, stopping SIPs during market dips, and investing in too many funds. Wealth building is boring by design. The less you tinker, the better your returns are likely to be.\n\n\"The best time to start investing was yesterday. The second best time is today,\" said Kalpen Parekh, MD and CEO of DSP Mutual Fund. \"Even Rs 500 a month can change your financial future if you give it enough time.\"",
+      "author": "Sanket Dhanorkar",
+      "tags": [
+        "KYC",
+        "Rs 500",
+        "SIP",
+        "audience:beginner",
+        "beginners",
+        "compounding",
+        "index fund",
+        "intent:news",
+        "investing",
+        "relevance:low",
+        "young investors"
+      ],
+      "url": "https://economictimes.indiatimes.com/mf/how-to/start-investing-rs-500-month-step-by-step-guide/articleshow/120383210.cms"
+    },
+    {
+      "id": "home-009",
+      "title": "Bond Yields Drop Sharply After RBI Rate Cut; 10-Year G-Sec Falls to 14-Month Low of 6.72%",
+      "published_at": "2026-03-26T14:00:00+05:30",
+      "category": "markets",
+      "content": "Government bond prices surged and yields fell sharply on Thursday after the Reserve Bank of India delivered a widely anticipated 25 basis point cut to the repo rate, bringing it down to 6.0%. The benchmark 10-year government security yield dropped 8 basis points to close at 6.72%, its lowest level since January 2025.\n\nThe rally was broad-based across the yield curve, with short-term securities outperforming as traders priced in the possibility of further rate cuts in the coming months. The 5-year government bond yield fell 11 basis points to 6.48%, while the 2-year yield dropped 14 basis points to 6.21%.\n\nThe RBI's decision to maintain an accommodative stance and its upward revision of GDP growth signalled that the central bank sees room for additional monetary easing without stoking inflation. Interest rate futures are now pricing in a 70% probability of another 25 basis point cut at the June policy meeting.\n\nFor corporate treasuries and chief financial officers managing large debt portfolios, the falling yield environment presents both opportunities and considerations. Companies with floating-rate borrowings will see an immediate reduction in interest costs, while those looking to issue fresh bonds can lock in historically attractive rates.\n\n\"We are advising our corporate clients to consider prefunding their FY27 borrowing requirements now, given the favourable rate environment,\" said Ajay Manglunia, managing director and head of institutional fixed income at JM Financial. \"The window for sub-7% corporate bond issuance may not remain open indefinitely.\"\n\nMutual funds focused on gilt and long-duration strategies were among the day's biggest winners. The ICICI Prudential Long Term Bond Fund gained 0.42% in a single session, while the SBI Magnum Gilt Fund rose 0.38%.\n\nForeign portfolio investors have been steady buyers of Indian government bonds since the JPMorgan index inclusion in June 2024, with cumulative inflows of $32 billion into the designated fully accessible route securities.",
+      "author": "Saikat Das",
+      "tags": [
+        "FPI",
+        "G-Sec",
+        "RBI rate cut",
+        "audience:beginner",
+        "bond yields",
+        "corporate bonds",
+        "fixed income",
+        "gilt funds",
+        "intent:news",
+        "relevance:low"
+      ],
+      "url": "https://economictimes.indiatimes.com/markets/bonds/bond-yields-drop-rbi-rate-cut-10-year-gsec-14-month-low/articleshow/120386445.cms"
+    },
+    {
+      "id": "home-010",
+      "title": "Top 5 Mutual Funds That Delivered Over 20% Returns in the Last Year: Should You Invest Now?",
+      "published_at": "2026-03-26T08:30:00+05:30",
+      "category": "personal_finance",
+      "content": "A handful of equity mutual funds have delivered stellar returns over the past 12 months, significantly outperforming the benchmark indices. But as every disclaimer warns, past performance is no guarantee of future results. Here is a look at the top five performers and whether they deserve a place in your portfolio.\n\nTopping the list is the Quant Small Cap Fund, which returned 28.4% over the trailing one-year period ending March 25, 2026. The fund's concentrated bets on select small-cap names in the capital goods and defence sectors paid off handsomely as government spending surged. However, the fund's high portfolio turnover and concentrated approach mean volatility can be equally dramatic on the downside.\n\nThe Nippon India Growth Fund, a mid-cap oriented scheme, delivered 24.7% returns, benefiting from the outperformance of the mid-cap segment. The fund has a long track record spanning over two decades and is managed by the experienced Manish Gunwani.\n\nThe HDFC Flexi Cap Fund came in third with 23.1% returns, driven by overweight positions in financials and industrials. Its large AUM of Rs 62,000 crore has not hindered performance, a testament to the fund management team's ability to deploy capital efficiently.\n\nThe Parag Parikh Flexi Cap Fund returned 22.3%, with its unique approach of allocating 15-20% to international equities providing diversification benefits. Holdings in Alphabet and Microsoft contributed positively as US tech stocks rallied in the latter half of the year.\n\nRounding out the top five is the Motilal Oswal Midcap Fund at 21.8%, which has consistently ranked in the top quartile of its category over three- and five-year periods.\n\nFinancial planners advise against chasing last year's winners blindly. \"Look at three- and five-year rolling returns, risk-adjusted metrics like the Sharpe ratio, and how the fund performed during market corrections before committing capital,\" said Vishal Dhawan, founder of Plan Ahead Wealth Advisors.\n\nFor most investors, a diversified portfolio of two to four funds spanning large-cap, flexi-cap and mid-cap categories, held via SIPs over a long horizon, remains the optimal strategy.",
+      "author": "Prashant Mahesh",
+      "tags": [
+        "audience:beginner",
+        "flexi cap",
+        "intent:news",
+        "mid cap",
+        "mutual funds",
+        "portfolio",
+        "relevance:low",
+        "returns",
+        "small cap",
+        "top performers"
+      ],
+      "url": "https://economictimes.indiatimes.com/mf/analysis/top-5-mutual-funds-20-percent-returns-last-year/articleshow/120383678.cms"
+    },
+    {
+      "id": "home-011",
+      "title": "Centre's Infrastructure Push Intensifies: Capital Expenditure Up 23% YoY in April-February",
+      "published_at": "2026-03-26T13:00:00+05:30",
+      "category": "sector",
+      "content": "The central government's capital expenditure surged 23% year-on-year to Rs 9.42 lakh crore during the April-February period of FY26, according to data released by the Controller General of Accounts on Thursday. The robust spending pace puts the government on track to meet or exceed its full-year capex target of Rs 11.11 lakh crore.\n\nThe roads and highways ministry accounted for the largest share of capital outlay at Rs 2.18 lakh crore, followed by railways at Rs 1.94 lakh crore and defence at Rs 1.47 lakh crore. The housing and urban affairs ministry saw the sharpest acceleration, with spending rising 41% as metro rail projects and the Smart Cities Mission entered advanced execution phases.\n\nFinance Secretary Tuhin Kanta Pandey said the government's capex push is designed to crowd in private investment by creating enabling infrastructure. \"Every rupee of public capex generates an estimated Rs 2.5-3.0 of economic activity through multiplier effects,\" he said at an industry event in New Delhi.\n\nThe impact is visible in order books of listed infrastructure companies. Larsen & Toubro reported a record order inflow of Rs 3.02 lakh crore in the nine months ending December 2025, up 19% year-on-year. Smaller players like KNR Constructions and PNC Infratech have also reported healthy order accretion.\n\nCement and steel producers are direct beneficiaries of the infrastructure boom. UltraTech Cement has expanded capacity by 22 million tonnes over the past two years to meet growing demand, while JSW Steel commissioned a new 5 MTPA facility in Odisha in January.\n\nAnalysts at Jefferies estimate that India needs cumulative infrastructure investment of $1.7 trillion over the next decade to sustain 7%+ GDP growth. \"The current pace of government spending, combined with improving private sector participation through models like InvITs and hybrid annuity projects, suggests India is on the right trajectory,\" the brokerage said in a recent note.\n\nState governments have also stepped up capital spending, with aggregate state capex rising 16% in the first three quarters of FY26, led by Uttar Pradesh, Maharashtra and Karnataka.",
+      "author": "Vinay Pandey",
+      "tags": [
+        "L&T",
+        "audience:beginner",
+        "capex",
+        "capital expenditure",
+        "government spending",
+        "infrastructure",
+        "intent:news",
+        "railways",
+        "relevance:low",
+        "roads"
+      ],
+      "url": "https://economictimes.indiatimes.com/news/economy/infrastructure/centre-capex-up-23-percent-yoy-april-february-fy26/articleshow/120386234.cms"
+    },
+    {
+      "id": "home-012",
+      "title": "SEBI Tightens Rules for Retail Investors: New Margin Norms, F&O Lot Size Changes from April 1",
+      "published_at": "2026-03-26T11:30:00+05:30",
+      "category": "policy",
+      "content": "The Securities and Exchange Board of India on Thursday announced a fresh set of regulatory measures aimed at protecting retail investors in the derivatives segment, building on the framework introduced in late 2024. The changes, effective April 1, include revised margin requirements and larger lot sizes for select index options contracts.\n\nUnder the new norms, the minimum contract size for Nifty and Bank Nifty weekly options will increase from the current Rs 10-15 lakh to Rs 20 lakh per lot. This effectively raises the barrier to entry for retail traders, many of whom have suffered significant losses in the options market. SEBI data showed that 93% of individual F&O traders lost money in FY25, with aggregate losses exceeding Rs 75,000 crore.\n\nSEBI Chairperson Madhabi Puri Buch said the measures are not intended to restrict market participation but to ensure that investors have adequate risk capacity. \"The derivatives market should be used for hedging and informed speculation, not as a substitute for lottery tickets,\" she said.\n\nThe regulator has also mandated that brokers implement a mandatory risk assessment questionnaire for all new F&O accounts. Investors will need to demonstrate a minimum annual income of Rs 10 lakh or net worth of Rs 25 lakh, and certify that they understand the risks of leveraged trading.\n\nBrokerages have had mixed reactions to the changes. Zerodha founder Nithin Kamath welcomed the measures, saying they would reduce the \"gamification\" of options trading. However, discount brokers that derive a significant portion of revenue from F&O volumes expressed concern about potential business impact. Shares of Angel One and 5paisa fell 3-4% in anticipation of lower trading volumes.\n\nIndustry participants expect monthly options volumes to decline 15-20% initially before stabilising. The broader equity market, however, is unlikely to be affected as institutional participation continues to grow and cash market volumes remain healthy.\n\nThe new framework also introduces quarterly reporting requirements for brokers on client-level P&L in the derivatives segment, enhancing transparency for investors about their actual trading performance.",
+      "author": "Reena Zachariah",
+      "tags": [
+        "F&O",
+        "SEBI",
+        "audience:beginner",
+        "derivatives",
+        "intent:news",
+        "margin norms",
+        "options trading",
+        "regulation",
+        "relevance:low",
+        "retail investors"
+      ],
+      "url": "https://economictimes.indiatimes.com/markets/stocks/news/sebi-tightens-rules-retail-investors-margin-fno-lot-size/articleshow/120385890.cms"
+    },
+    {
+      "id": "home-013",
+      "title": "Startup Funding Rebounds Strongly: Indian Startups Raise $5.2 Billion in Q1 2026",
+      "published_at": "2026-03-26T10:00:00+05:30",
+      "category": "tech",
+      "content": "Indian startups raised $5.2 billion across 287 deals in the first quarter of 2026, marking a 68% increase from the $3.1 billion raised in Q1 2025 and signalling a decisive end to the two-year funding winter that had gripped the ecosystem. The data, compiled by Tracxn, shows that both deal volumes and average ticket sizes have recovered to levels last seen in early 2022.\n\nThe recovery was led by a handful of large late-stage rounds. Quick-commerce major Zepto raised $850 million in a Series G round at a valuation of $8.5 billion, while enterprise SaaS firm Darwinbox secured $200 million from investors including Salesforce Ventures and TCV. Climate-tech startup Ather Energy completed a pre-IPO round of $180 million ahead of its planned public listing later this year.\n\nSeed and early-stage funding also showed healthy growth, rising 34% year-on-year to $780 million across 198 deals. Investors are particularly enthusiastic about startups building applications on top of generative AI infrastructure. AI-focused startups accounted for nearly 22% of all deals in the quarter, up from 11% a year ago.\n\n\"The market has recalibrated after the excesses of 2021-22,\" said Rajan Anandan, managing director of Peak XV Partners (formerly Sequoia India). \"Founders are more disciplined about unit economics, and investors are more rigorous about due diligence. This is a healthier funding environment.\"\n\nThe IPO pipeline has also provided a significant confidence boost. Successful listings by Swiggy, FirstCry and Ola Electric in 2025 demonstrated that public market exits are viable for Indian startups, encouraging late-stage investors to deploy capital.\n\nSector-wise, fintech continued to attract the most funding at $1.4 billion, followed by enterprise tech at $980 million, consumer internet at $870 million and health-tech at $520 million. Geographically, Bengaluru-based startups accounted for 42% of total funding, followed by Delhi-NCR at 28% and Mumbai at 18%.\n\nHowever, challenges remain. Valuations for mid-stage companies remain 20-30% below their 2021 peaks, and profitability expectations have become non-negotiable for growth-stage companies seeking new rounds.",
+      "author": "Samidha Sharma",
+      "tags": [
+        "AI",
+        "IPO",
+        "Q1 2026",
+        "Zepto",
+        "audience:beginner",
+        "fintech",
+        "funding",
+        "intent:news",
+        "relevance:low",
+        "startups",
+        "venture capital"
+      ],
+      "url": "https://economictimes.indiatimes.com/tech/startups/startup-funding-rebounds-q1-2026-5-2-billion/articleshow/120384567.cms"
+    },
+    {
+      "id": "home-014",
+      "title": "Gold Prices Surge to Record Rs 92,400 Per 10 Grams Amid Global Uncertainty, Central Bank Buying",
+      "published_at": "2026-03-26T15:00:00+05:30",
+      "category": "markets",
+      "content": "Gold prices in India hit a fresh all-time high of Rs 92,400 per 10 grams on Thursday, extending a rally that has seen the precious metal gain over 18% since the start of the calendar year. In international markets, spot gold touched $2,840 per ounce, just shy of the psychologically important $2,850 level.\n\nThe surge has been driven by a confluence of factors including escalating geopolitical tensions in the Middle East, concerns about a potential US economic slowdown, and sustained central bank buying. The World Gold Council reported that global central banks purchased 387 tonnes of gold in the first two months of 2026, the highest January-February tally on record. The People's Bank of China and the Reserve Bank of India were among the most active buyers.\n\nFor Indian consumers, the rally has made gold jewellery purchases increasingly expensive, with 22-karat gold for jewellery now costing over Rs 85,000 per 10 grams after making charges. However, investment demand remains robust. Gold exchange-traded funds listed in India saw net inflows of Rs 4,200 crore in February, the highest monthly figure in over a year.\n\nAnalysts are divided on whether the rally has more room to run. Chirag Mehta, CIO of Quantum Mutual Fund, believes gold could touch $3,000 per ounce by year-end. \"Gold is benefiting from structural tailwinds including de-dollarisation, geopolitical risk premiums and the diminishing real value of fiat currencies. This is not a speculative bubble,\" he said.\n\nOthers urge caution. \"Gold has no cash flows and no earnings growth. At current levels, it is pricing in a fairly dire global scenario,\" said Navneet Munot, MD and CEO of HDFC AMC. \"Investors should cap their gold allocation at 10-15% of their portfolio.\"\n\nSovereign gold bonds issued by the RBI continue to offer the most tax-efficient route for gold investment, with a guaranteed 2.5% annual interest over and above price appreciation. However, the government has not announced a new tranche since November 2025, leading to speculation about whether the programme will continue.",
+      "author": "Pratik Bhakta",
+      "tags": [
+        "audience:beginner",
+        "central bank buying",
+        "gold ETF",
+        "gold prices",
+        "intent:news",
+        "precious metals",
+        "relevance:low",
+        "safe haven",
+        "sovereign gold bonds"
+      ],
+      "url": "https://economictimes.indiatimes.com/markets/commodities/news/gold-prices-surge-record-92400-global-uncertainty/articleshow/120386789.cms"
+    },
+    {
+      "id": "home-015",
+      "title": "NPS Tax Benefits Explained: How the National Pension System Can Save You Up to Rs 2 Lakh in Taxes",
+      "published_at": "2026-03-26T06:00:00+05:30",
+      "category": "personal_finance",
+      "content": "The National Pension System remains one of the most tax-efficient retirement savings instruments available to Indian taxpayers, yet it is significantly underutilised compared to traditional options like PPF and ELSS. With the financial year ending in less than a week, here is a clear breakdown of how NPS can help you save up to Rs 2 lakh in taxes.\n\nThe primary tax benefit comes under Section 80CCD(1), which allows you to claim a deduction of up to 10% of your salary (basic plus dearness allowance) for NPS contributions. This deduction falls within the overall Rs 1.5 lakh limit of Section 80C, which means it competes with other popular instruments like PPF, ELSS and life insurance premiums.\n\nThe real advantage, however, lies in Section 80CCD(1B), which provides an additional deduction of up to Rs 50,000 exclusively for NPS contributions. This is over and above the Rs 1.5 lakh limit of Section 80C, giving NPS subscribers a unique tax-saving advantage that no other instrument offers.\n\nFor salaried individuals, there is a third benefit under Section 80CCD(2): employer contributions to NPS of up to 14% of salary (for central government employees) or 10% (for others) are deductible from taxable income without any upper cap. This effectively means that for someone with a basic salary of Rs 10 lakh, employer NPS contributions of up to Rs 1 lakh are fully tax-free.\n\nCombining all three provisions, a taxpayer in the highest 30% tax bracket can save approximately Rs 62,400 in taxes annually, or over Rs 2 lakh if employer contributions are factored in.\n\nIt is important to note that these benefits are available only under the old tax regime. Under the new regime, only the employer contribution under Section 80CCD(2) remains available as a deduction.\n\nOn the investment side, NPS offers a choice of equity, corporate bonds and government securities across multiple fund managers. Aggressive allocation NPS portfolios have delivered annualised returns of 12-14% over the past decade, comfortably outpacing inflation.\n\nThe partial withdrawal rules have also been liberalised. Subscribers can withdraw up to 25% of their own contributions after three years for specified purposes including children's education, home purchase or medical treatment. At retirement, 60% of the corpus can be withdrawn tax-free, while the remaining 40% must be used to purchase an annuity.",
+      "author": "Renu Yadav",
+      "tags": [
+        "NPS",
+        "Section 80CCD",
+        "audience:beginner",
+        "intent:news",
+        "old tax regime",
+        "pension",
+        "relevance:low",
+        "retirement planning",
+        "tax benefits",
+        "tax saving"
+      ],
+      "url": "https://economictimes.indiatimes.com/wealth/tax/nps-tax-benefits-explained-save-up-to-2-lakh/articleshow/120383098.cms"
+    }
+  ]
+}

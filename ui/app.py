@@ -378,11 +378,48 @@ if st.session_state.get("show_settings_page", False):
         with st.expander("Compliance Report", expanded=False):
             st.json(compliance_report)
 
+    st.divider()
+    st.markdown("**Measurement + A/B**")
+    ab_days = st.slider("Summary window (days)", min_value=7, max_value=180, value=30, key="settings_ab_days")
+
+    if st.button("Load A/B Summary", key="settings_load_ab_summary"):
+        try:
+            from src.agents.ab_measurement import get_ab_test_summary
+
+            st.session_state["settings_ab_summary"] = get_ab_test_summary(days=int(ab_days))
+        except Exception as e:
+            st.error(f"Failed to load A/B summary: {e}")
+
+    if st.button("Load Recent A/B Runs", key="settings_load_ab_runs"):
+        try:
+            from src.agents.ab_measurement import list_ab_test_runs
+
+            st.session_state["settings_ab_runs"] = list_ab_test_runs(limit=25)
+        except Exception as e:
+            st.error(f"Failed to load A/B runs: {e}")
+
+    ab_summary = st.session_state.get("settings_ab_summary")
+    if ab_summary:
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Total A/B Runs", ab_summary.get("total_runs", 0))
+        m2.metric("Personalized Win Rate", f"{ab_summary.get('personalized_win_rate', 0) * 100:.1f}%")
+        m3.metric("Avg Relevance Lift", f"{ab_summary.get('avg_relevance_lift', 0):.3f}")
+        m4.metric("Avg Cost / Run", f"${ab_summary.get('avg_cost_per_run', 0):.4f}")
+
+        with st.expander("A/B Daily Trend", expanded=False):
+            st.json(ab_summary.get("daily_trend", []))
+
+    ab_runs = st.session_state.get("settings_ab_runs")
+    if ab_runs:
+        with st.expander("Recent A/B Runs", expanded=False):
+            st.json(ab_runs)
+
     st.stop()
 
 # --- Tabs ---
-tab1, tab2, tab3 = st.tabs([
+tab1, tab2, tab3, tab4 = st.tabs([
     "News Navigator",
+    "My ET — Create Your Profile",
     "Personalised Feed",
     "Vernacular Video",
 ])
@@ -595,90 +632,569 @@ with tab1:
                     )
 
 # ============================================================
-# TAB 2: PERSONALISED FEED
+# TAB 2: MY ET — USER CREATION & ONBOARDING (Phase 1)
 # ============================================================
 with tab2:
-    st.header("Personalised Feed — Same News, Different Experience")
-    st.markdown("*How the same homepage transforms for different user personas*")
-
-    col_before, col_after = st.columns([1, 2])
-
-    with col_before:
-        st.subheader("BEFORE: Same Homepage")
-        st.markdown("""
-        <div style="background:#f1f5f9; padding:20px; border-radius:8px; text-align:center;">
-            <p style="color:#64748b;">Identical content for all users</p>
-            <p style="color:#64748b;">Same order, same format, same depth</p>
-            <p style="color:#94a3b8; font-size:48px;">📰</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col_after:
-        st.subheader("AFTER: Persona-Differentiated")
-
-    if st.button("Generate Comparison", key="gen_feed", type="primary"):
-        with st.spinner("Profiling → Ranking → Adapting content for both personas..."):
-            try:
-                from src.tools.article_loader import load_homepage_articles, load_user_profile
-                from src.agents.persona_feed.pipeline import run_feed_comparison
-
-                articles = load_homepage_articles()
-                profile_a = load_user_profile("cfo_profile")
-                profile_b = load_user_profile("young_investor_profile")
-
-                start = time.time()
-                comparison = run_async(run_feed_comparison(articles, profile_a, profile_b))
-                elapsed = time.time() - start
-
-                st.session_state["feed_comparison"] = comparison
-                st.session_state["feed_time"] = elapsed
-                st.success(f"Feeds generated in {elapsed:.1f}s")
-            except Exception as e:
-                st.error(f"Feed error: {e}")
-
-    if "feed_comparison" in st.session_state:
-        comp = st.session_state["feed_comparison"]
-
-        # Delta summary
-        st.info(comp.delta_summary)
-
-        # Side-by-side feeds
-        col_a, col_b = st.columns(2)
-
-        with col_a:
-            st.subheader(f"👔 {comp.feed_a.user_profile.name}")
-            st.caption(f"{comp.feed_a.user_profile.role} | {comp.feed_a.reading_level_applied} depth | {comp.feed_a.format_applied} format")
-            for item in comp.feed_a.feed_items:
-                with st.container():
-                    st.markdown(f"**{item.adapted_title}**")
-                    st.markdown(item.adapted_content[:300] + "..." if len(item.adapted_content) > 300 else item.adapted_content)
-                    st.caption(f"Format: {item.format_type} | Relevance: {item.relevance_score:.0%}")
-                    st.divider()
-
-        with col_b:
-            st.subheader(f"🎓 {comp.feed_b.user_profile.name}")
-            st.caption(f"{comp.feed_b.user_profile.role} | {comp.feed_b.reading_level_applied} depth | {comp.feed_b.format_applied} format")
-            for item in comp.feed_b.feed_items:
-                with st.container():
-                    st.markdown(f"**{item.adapted_title}**")
-                    st.markdown(item.adapted_content[:300] + "..." if len(item.adapted_content) > 300 else item.adapted_content)
-                    st.caption(f"Format: {item.format_type} | Relevance: {item.relevance_score:.0%}")
-                    st.divider()
-
-        # Audit trail
-        if comp.audit_trail:
-            with st.expander("Audit Trail"):
-                for entry in comp.audit_trail:
-                    status_icon = {"success": "✅", "fallback": "⚠️", "error": "❌"}.get(entry.status, "ℹ️")
-                    st.markdown(
-                        f"{status_icon} **{entry.agent_name}** | {entry.action} | "
-                        f"Model: `{entry.model_used}` | {entry.latency_ms}ms"
+    st.header("🎯 My ET — Create Your Personalized Newsroom")
+    st.markdown("*Answer a few quick questions and get news tailored to you*")
+    
+    # Session state for form tracking
+    if "onboarding_step" not in st.session_state:
+        st.session_state.onboarding_step = "mode_select"
+    if "quick_answers" not in st.session_state:
+        st.session_state.quick_answers = {}
+    if "deep_answers" not in st.session_state:
+        st.session_state.deep_answers = {}
+    
+    # Step 1: Choose quick or deep setup
+    if st.session_state.onboarding_step == "mode_select":
+        st.subheader("Step 1: Choose Your Setup")
+        st.markdown("Quick setup takes 2 minutes. Deep setup gives us more context (5 minutes).")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("⚡ Quick Start (4 questions)", key="quick_mode", use_container_width=True):
+                st.session_state.is_deep_setup = False
+                st.session_state.onboarding_step = "questions"
+                st.rerun()
+        
+        with col2:
+            if st.button("🔍 Deep Setup (10 questions)", key="deep_mode", use_container_width=True):
+                st.session_state.is_deep_setup = True
+                st.session_state.onboarding_step = "questions"
+                st.rerun()
+    
+    # Step 2: Collect answers
+    elif st.session_state.onboarding_step == "questions":
+        from src.agents.onboarding import QUICK_START_QUESTIONS, DEEP_SETUP_QUESTIONS
+        
+        st.subheader("Step 2: Tell Us About Yourself")
+        
+        # Basic info
+        name = st.text_input(
+            "What's your name?",
+            value=st.session_state.get("user_name", ""),
+            key="user_name_input",
+        )
+        st.session_state.user_name = name
+        
+        st.divider()
+        
+        # Quick start questions
+        quick_questions = QUICK_START_QUESTIONS
+        for q in quick_questions:
+            if q["type"] == "single_choice":
+                st.session_state.quick_answers[q["id"]] = st.radio(
+                    q["question"],
+                    q["options"],
+                    key=f"q_{q['id']}",
+                    index=0,
+                )
+            elif q["type"] == "multi_choice":
+                st.session_state.quick_answers[q["id"]] = st.multiselect(
+                    q["question"],
+                    q["options"],
+                    key=f"q_{q['id']}",
+                    max_selections=3 if "pick up to" in q["question"].lower() else None,
+                )
+            st.markdown("")
+        
+        # Deep setup questions if selected
+        if st.session_state.is_deep_setup:
+            st.divider()
+            st.markdown("### Additional Details")
+            
+            deep_questions = DEEP_SETUP_QUESTIONS
+            for q in deep_questions:
+                if q["type"] == "single_choice":
+                    st.session_state.deep_answers[q["id"]] = st.radio(
+                        q["question"],
+                        q["options"],
+                        key=f"deep_{q['id']}",
                     )
+                elif q["type"] == "multi_choice":
+                    st.session_state.deep_answers[q["id"]] = st.multiselect(
+                        q["question"],
+                        q["options"],
+                        key=f"deep_{q['id']}",
+                    )
+                st.markdown("")
+        
+        # Submit button
+        if st.button("Create My Profile", key="create_profile_btn", type="primary", use_container_width=True):
+            if not st.session_state.user_name.strip():
+                st.error("Please enter your name")
+            else:
+                # Call API to create user
+                try:
+                    import requests
+                    
+                    payload = {
+                        "name": st.session_state.user_name,
+                        "quick_start_answers": st.session_state.quick_answers,
+                        "is_deep_setup": st.session_state.is_deep_setup,
+                        "deep_setup_answers": st.session_state.deep_answers,
+                    }
+                    
+                    response = requests.post(
+                        "http://localhost:8000/api/v1/users/create",
+                        json=payload,
+                        timeout=30,
+                    )
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        st.session_state.created_user = result
+                        st.session_state.onboarding_step = "success"
+                        st.rerun()
+                    else:
+                        st.error(f"Error creating profile: {response.text}")
+                except Exception as e:
+                    st.error(f"Connection error: {e}")
+    
+    # Step 3: Success
+    elif st.session_state.onboarding_step == "success":
+        user = st.session_state.created_user
+        st.success("✅ Profile Created Successfully!")
+        
+        st.markdown(f"""
+        ### Welcome, **{user['name']}**!
+        
+        **Your Profile:**
+        - **Role:** {user['role']}
+        - **Reading Level:** {user['reading_level'].title()}
+        - **Preferred Format:** {user['preferred_format'].replace('_', ' ').title()}
+        - **Interests:** {', '.join(user['priority_topics'])}
+        
+        Your personalized feed will start appearing in the **Personalized Feed** tab!
+        """)
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("View Your Profile", use_container_width=True):
+                st.session_state.new_user_id = user["user_id"]
+                st.session_state.view_profile = True
+        
+        with col2:
+            if st.button("Create Another Profile", use_container_width=True):
+                st.session_state.onboarding_step = "mode_select"
+                st.session_state.quick_answers = {}
+                st.session_state.deep_answers = {}
+                st.rerun()
+        
+        with col3:
+            if st.button("Go to Feed", use_container_width=True):
+                st.info("Switch to the 'Personalised Feed' tab to view your news feed")
 
 # ============================================================
-# TAB 3: VERNACULAR VIDEO
+# TAB 3: PERSONALISED FEED
 # ============================================================
 with tab3:
+    st.header("📰 Your Personalized Feed")
+    st.markdown("*News curated just for you based on your profile and interests*")
+    
+    # Step 1: User selector
+    st.subheader("Select Your Profile")
+    
+    # Load available users
+    from src.agents.onboarding import list_all_user_profiles
+    
+    available_users = list_all_user_profiles()
+    if not available_users:
+        st.warning("⚠️ No user profiles found. Please create one in 'My ET — Create Your Profile' tab first.")
+        st.stop()
+    
+    user_options = {u['user_id']: f"{u['name']} ({u['role']})" for u in available_users}
+    selected_user_id = st.selectbox(
+        "Choose your profile:",
+        options=list(user_options.keys()),
+        format_func=lambda x: user_options[x],
+        key="personalized_feed_user_selector",
+    )
+    
+    # Load selected user profile
+    from src.agents.onboarding import load_user_by_id
+    selected_profile = load_user_by_id(selected_user_id)
+    
+    if selected_profile is None:
+        st.error(f"❌ Could not load profile '{selected_user_id}'. Profile file may be corrupted or missing.")
+        st.stop()
+    
+    # Display profile summary
+    profile_col1, profile_col2, profile_col3 = st.columns(3)
+    with profile_col1:
+        st.metric("Role", selected_profile.role)
+    with profile_col2:
+        st.metric("Reading Level", selected_profile.reading_level.title())
+    with profile_col3:
+        st.metric("Top Interest", selected_profile.interests[0] if selected_profile.interests else "N/A")
+    
+    st.divider()
+    
+    # Step 2: Generate personalized feed
+    st.subheader("Your Personalized News")
+    
+    gen_col1, gen_col2 = st.columns([2, 1])
+    
+    with gen_col1:
+        st.markdown(f"Showing articles tailored for **{selected_profile.name}**")
+    
+    with gen_col2:
+        if st.button("🔄 Refresh Feed", key="refresh_personalized_feed", use_container_width=True):
+            st.session_state["personalized_feed"] = None
+            st.rerun()
+    
+    # Load articles for personalization
+    if st.button("Generate My Feed", key="gen_personalized_feed", type="primary", use_container_width=True):
+        with st.spinner(f"Personalizing feed for {selected_profile.name}..."):
+            try:
+                from src.tools.article_loader import load_homepage_articles
+                from src.agents.personalized_feed_pipeline import generate_personalized_user_feed
+                
+                articles = load_homepage_articles()
+                
+                # Convert dict articles to Article objects
+                from src.models import Article
+                article_objs = [
+                    Article(**a) if isinstance(a, dict) else a 
+                    for a in articles
+                ]
+
+                article_map = {}
+                for a in articles:
+                    if isinstance(a, dict):
+                        article_id = a.get("id")
+                        if article_id:
+                            article_map[article_id] = a
+                    else:
+                        article_map[a.id] = a.model_dump()
+                
+                start = time.time()
+                feed_result = run_async(
+                    generate_personalized_user_feed(
+                        user_id=selected_profile.user_id,
+                        profile=selected_profile,
+                        all_articles=article_objs,
+                        session_id=f"feed_{selected_profile.user_id}",
+                        use_personalized_subset=True,
+                        top_n=5,
+                    )
+                )
+                elapsed = time.time() - start
+                
+                st.session_state["personalized_feed"] = feed_result
+                st.session_state["feed_source_article_map"] = article_map
+                st.session_state["feed_generation_time"] = elapsed
+                st.success(f"✅ Feed generated in {elapsed:.1f}s")
+                st.rerun()
+            except Exception as e:
+                st.error(f"❌ Feed generation error: {str(e)}")
+                import traceback
+                st.error(traceback.format_exc())
+    
+    # Display personalized feed if available
+    if "personalized_feed" in st.session_state:
+        feed_result = st.session_state["personalized_feed"]
+        feed = feed_result["feed"]
+        explanations = feed_result["explanations"]
+        generation_time = st.session_state.get("feed_generation_time", 0)
+
+        from src.agents.feed_organizer import (
+            organize_feed_into_sections,
+            get_section_summary_stats,
+            filter_section_by_search,
+        )
+        from src.agents.metadata_enricher import (
+            enrich_feed_with_metadata,
+            get_urgency_badge,
+            get_sentiment_emoji,
+            get_credibility_stars,
+            format_freshness,
+            get_metadata_summary_stats,
+        )
+
+        source_article_map = st.session_state.get("feed_source_article_map", {})
+        section_input_items = []
+        for item in feed.feed_items:
+            source = source_article_map.get(item.article_id, {})
+            section_input_items.append({
+                "id": item.article_id,
+                "title": item.adapted_title or item.original_title,
+                "content": item.adapted_content,
+                "author": source.get("author", ""),
+                "published_at": source.get("published_at", ""),
+                "category": source.get("category", ""),
+                "tags": source.get("tags", []),
+                "original_title": item.original_title,
+                "format_type": item.format_type,
+            })
+
+        organized = organize_feed_into_sections(
+            user_id=selected_profile.user_id,
+            user_profile=selected_profile,
+            feed_items=section_input_items,
+            explanations=explanations,
+        )
+        metadata_map = enrich_feed_with_metadata(section_input_items, selected_profile.model_dump())
+        metadata_stats = get_metadata_summary_stats(metadata_map)
+
+        # Feed metrics
+        st.subheader("Feed Insights")
+        metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+
+        with metric_col1:
+            st.metric("Articles in Feed", len(feed.feed_items))
+        with metric_col2:
+            avg_relevance = sum(e["relevance_score"] for e in explanations) / len(explanations) if explanations else 0
+            st.metric("Avg. Relevance", f"{avg_relevance:.2f} / 1.0")
+        with metric_col3:
+            st.metric("Sections", len(organized.sections))
+        with metric_col4:
+            st.metric("Generation Time", f"{generation_time:.1f}s")
+
+        sent_dist = metadata_stats.get("sentiment_distribution", {})
+        urgency_dist = metadata_stats.get("urgency_distribution", {})
+        stat_col1, stat_col2, stat_col3 = st.columns(3)
+        with stat_col1:
+            st.caption(
+                f"Sentiment: 📈 {sent_dist.get('bullish', 0)} | ➡️ {sent_dist.get('neutral', 0)} | 📉 {sent_dist.get('bearish', 0)}"
+            )
+        with stat_col2:
+            st.caption(
+                f"Urgency: 🔴 {urgency_dist.get('breaking', 0)} | 🟡 {urgency_dist.get('important', 0)}"
+            )
+        with stat_col3:
+            st.caption(f"Avg credibility: {metadata_stats.get('avg_credibility', 0):.2f} / 1.0")
+
+        st.divider()
+
+        st.subheader("🔥 Headline Picks")
+        if organized.headline_articles:
+            for h in organized.headline_articles:
+                h_item = h.get("item", {})
+                h_expl = h.get("explanation", {})
+                h_meta = metadata_map.get(h_item.get("id"))
+                title = h_item.get("title", "Untitled")
+                section_name = h.get("section", "")
+                st.markdown(f"**{title}**")
+                st.caption(f"{section_name} | Relevance: {h_expl.get('relevance_score', 0):.2f}")
+                if h_meta:
+                    badge = get_urgency_badge(h_meta)
+                    st.caption(
+                        f"{badge if badge else 'Routine'} | {get_sentiment_emoji(h_meta)} | {get_credibility_stars(h_meta)} | {format_freshness(h_meta)}"
+                    )
+
+        st.divider()
+
+        st.subheader("📚 Sectioned Feed")
+        section_search = st.text_input(
+            "Search within your feed",
+            value="",
+            key="phase6_feed_search",
+            placeholder="Try: market, tax, policy...",
+        )
+
+        for sec_idx, section in enumerate(organized.sections):
+            visible_section = filter_section_by_search(section, section_search) if section_search else section
+            section_stats = get_section_summary_stats(visible_section)
+            header = (
+                f"{visible_section.section_name} ({visible_section.article_count})"
+                f" · Avg relevance {section_stats.get('avg_relevance', 0):.2f}"
+            )
+
+            with st.expander(header, expanded=sec_idx == 0):
+                if not visible_section.articles:
+                    st.caption("No articles match this search in this section.")
+                    continue
+
+                for item_idx, wrapped in enumerate(visible_section.articles):
+                    article = wrapped.get("item", {})
+                    explanation = wrapped.get("explanation", {})
+                    article_id = article.get("id", f"sec{sec_idx}_item{item_idx}")
+                    metadata = metadata_map.get(article_id)
+                    key_base = f"{sec_idx}_{item_idx}_{article_id}"
+
+                    with st.container():
+                        feed_card_col1, feed_card_col2 = st.columns([3, 1])
+
+                        with feed_card_col1:
+                            st.markdown(f"### {article.get('title', 'Untitled')}")
+                            content_preview = (article.get("content", "") or "")[:220]
+                            if content_preview:
+                                st.markdown(f"{content_preview}...")
+
+                            if metadata:
+                                urgency_badge = get_urgency_badge(metadata)
+                                urgency_text = urgency_badge if urgency_badge else "Routine"
+                                st.caption(
+                                    f"{urgency_text} | {get_sentiment_emoji(metadata)} {metadata.sentiment.title()}"
+                                    f" | {get_credibility_stars(metadata)} | {format_freshness(metadata)}"
+                                )
+
+                            exp_col1, exp_col2, exp_col3 = st.columns(3)
+                            with exp_col1:
+                                relevance = explanation.get("relevance_score", 0)
+                                relevance_color = "🟢" if relevance > 0.7 else "🟡" if relevance > 0.4 else "🔴"
+                                st.caption(f"{relevance_color} Relevance: {relevance:.2f}")
+                            with exp_col2:
+                                confidence = explanation.get("confidence", "low")
+                                confidence_icon = "✓" if confidence == "high" else "~"
+                                st.caption(f"{confidence_icon} Confidence: {confidence.title()}")
+                            with exp_col3:
+                                st.caption(f"📏 Format: {explanation.get('format_applied', 'standard').title()}")
+
+                            boost_badge = " 🚀 **BOOSTED**" if explanation.get("boosted", False) else ""
+                            st.caption(f"💡 **Why shown:** {explanation.get('why_shown', 'Relevant to your profile')}{boost_badge}")
+
+                            matched_tags = explanation.get("matched_tags", [])
+                            if matched_tags:
+                                st.caption(f"#️⃣ Tags: {' | '.join(matched_tags[:3])}")
+
+                        with feed_card_col2:
+                            st.markdown("")
+                            st.markdown("")
+                            fb_col1, fb_col2 = st.columns(2)
+                            with fb_col1:
+                                if st.button("👍", key=f"interested_{key_base}", use_container_width=True):
+                                    from src.agents.engagement_tracker import log_article_feedback
+
+                                    log_article_feedback(
+                                        user_id=selected_profile.user_id,
+                                        article_id=article_id,
+                                        feedback_type="interested",
+                                        reason=None,
+                                        session_id=f"feed_{selected_profile.user_id}",
+                                    )
+                                    st.toast("👍 Great! We'll show you more like this.", icon="✅")
+
+                            with fb_col2:
+                                if st.button("👎", key=f"not_interested_{key_base}", use_container_width=True):
+                                    st.session_state[f"show_reason_picker_{key_base}"] = True
+
+                            if st.session_state.get(f"show_reason_picker_{key_base}", False):
+                                from src.agents.engagement_tracker import log_article_feedback, FEEDBACK_REASONS
+
+                                with st.popover("👎 Why not interested?", use_container_width=True):
+                                    st.markdown("**Help us improve your feed:**")
+                                    selected_reason = st.radio(
+                                        "What's the reason?",
+                                        options=FEEDBACK_REASONS["not_interested"],
+                                        key=f"reason_picker_{key_base}",
+                                    )
+
+                                    if st.button("Confirm", key=f"confirm_reason_{key_base}", use_container_width=True):
+                                        log_article_feedback(
+                                            user_id=selected_profile.user_id,
+                                            article_id=article_id,
+                                            feedback_type="not_interested",
+                                            reason=selected_reason,
+                                            session_id=f"feed_{selected_profile.user_id}",
+                                        )
+                                        st.session_state[f"show_reason_picker_{key_base}"] = False
+                                        st.toast(f"👎 Got it! {selected_reason}. We'll improve your feed.", icon="📝")
+                                        st.rerun()
+
+                    st.divider()
+        
+        # A/B Comparison option
+        st.subheader("📊 Compare with Baseline")
+        st.markdown("*See how the personalized feed differs from generic ordering*")
+        
+        if st.button("Show A/B Comparison", key="show_ab_comparison", use_container_width=True):
+            with st.spinner("Generating baseline feed for comparison..."):
+                try:
+                    from src.agents.personalized_feed_pipeline import compare_personalized_vs_baseline
+                    from src.tools.article_loader import load_homepage_articles
+                    from src.models import Article
+                    
+                    articles = load_homepage_articles()
+                    article_objs = [
+                        Article(**a) if isinstance(a, dict) else a 
+                        for a in articles
+                    ]
+                    
+                    comparison = run_async(
+                        compare_personalized_vs_baseline(
+                            user_id=selected_profile.user_id,
+                            profile=selected_profile,
+                            all_articles=article_objs,
+                            session_id=f"comparison_{selected_profile.user_id}",
+                        )
+                    )
+
+                    total_cost_usd = 0.0
+                    for entry in comparison.get("audit_trail", []):
+                        if isinstance(entry, dict):
+                            total_cost_usd += float(entry.get("estimated_cost_usd", 0.0) or 0.0)
+                        else:
+                            total_cost_usd += float(getattr(entry, "estimated_cost_usd", 0.0) or 0.0)
+
+                    from src.agents.ab_measurement import log_feed_ab_test_run
+
+                    log_feed_ab_test_run(
+                        user_id=selected_profile.user_id,
+                        session_id=f"comparison_{selected_profile.user_id}",
+                        delta_metrics=comparison.get("delta_metrics", {}),
+                        total_cost_usd=total_cost_usd,
+                    )
+                    
+                    st.session_state["feed_comparison"] = comparison
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Comparison error: {str(e)}")
+        
+        # Display comparison if available
+        if "feed_comparison" in st.session_state:
+            comp = st.session_state["feed_comparison"]
+            delta = comp["delta_metrics"]
+            
+            st.markdown("**Comparison Results**")
+            
+            comp_col1, comp_col2, comp_col3, comp_col4 = st.columns(4)
+            with comp_col1:
+                st.metric("Articles in Common", delta['articles_in_common'])
+            with comp_col2:
+                st.metric("Unique to Personalized", delta['unique_to_personalized'])
+            with comp_col3:
+                st.metric("Personalized Avg Relevance", f"{delta['personalized_avg_relevance']:.2f}")
+            with comp_col4:
+                st.metric("Baseline Avg Relevance", f"{delta['baseline_avg_relevance']:.2f}")
+            
+            st.info(f"📌 {delta['personalization_delta']}")
+        
+        # Feedback summary
+        from src.agents.engagement_tracker import get_user_feedback_summary
+        
+        feedback_summary = get_user_feedback_summary(selected_profile.user_id)
+        
+        if feedback_summary["interested_count"] > 0 or feedback_summary["not_interested_count"] > 0:
+            st.divider()
+            st.subheader("📊 Your Feedback This Session")
+            
+            feedback_col1, feedback_col2 = st.columns(2)
+            
+            with feedback_col1:
+                st.metric("👍 Articles You Liked", feedback_summary["interested_count"])
+                if feedback_summary["interested_reasons"]:
+                    with st.expander("Why you liked them"):
+                        for reason, count in feedback_summary["interested_reasons"].items():
+                            st.caption(f"{reason}: {count}")
+            
+            with feedback_col2:
+                st.metric("👎 Articles Not Helpful", feedback_summary["not_interested_count"])
+                if feedback_summary["not_interested_reasons"]:
+                    with st.expander("Why not helpful"):
+                        for reason, count in feedback_summary["not_interested_reasons"].items():
+                            st.caption(f"{reason}: {count}")
+            
+            st.caption("💡 Your feedback helps us improve your personalized feed for next time!")
+
+
+
+# ============================================================
+# TAB 4: VERNACULAR VIDEO
+# ============================================================
+with tab4:
     st.header("Breaking News → Vernacular Video")
     st.markdown("*5-agent pipeline: Ingest → Script → Fact-check → Audio → Video (language selectable)*")
 

@@ -4,6 +4,8 @@
 
 A **15-agent multi-agent system** that transforms how business news is consumed — from static, one-size-fits-all articles to interactive, personalised, multilingual experiences.
 
+Phase roadmap status: **Phases 1-7 complete** (onboarding, personalization, adaptive feedback, UX upgrades, measurement + A/B).
+
 ## What It Does
 
 | Scenario | Description | Agents |
@@ -65,6 +67,15 @@ API docs: http://localhost:8000/docs
 
 ```bash
 python tests/test_smoke.py
+
+# Phase test suites
+.venv\Scripts\python tests/test_phase1_onboarding.py
+.venv\Scripts\python tests/test_phase2_corpus_personalization.py
+.venv\Scripts\python tests/test_phase3_personalized_feed.py
+.venv\Scripts\python tests/test_phase4_feedback_loop.py
+.venv\Scripts\python tests/test_phase5_adaptive_learning.py
+.venv\Scripts\python tests/test_phase6_ux_upgrades.py
+.venv\Scripts\python tests/test_phase7_measurement_ab.py
 ```
 
 ## API Endpoints
@@ -74,7 +85,14 @@ python tests/test_smoke.py
 | POST | `/api/v1/navigator/briefing` | Generate full News Navigator briefing |
 | POST | `/api/v1/navigator/query` | Ask follow-up question on briefing |
 | POST | `/api/v1/feed/compare` | Generate side-by-side persona feeds |
+| POST | `/api/v1/feed/personalized` | Profile-aware corpus-personalized feed subset |
+| POST | `/api/v1/feed/personalized-full` | End-to-end personalized feed with explanations |
+| POST | `/api/v1/feed/comparison-test` | Personalized vs baseline A/B comparison for one user |
 | POST | `/api/v1/video/generate` | Generate vernacular explainer video |
+| GET | `/api/v1/onboarding/questions` | Retrieve onboarding question sets |
+| POST | `/api/v1/users/create` | Create user profile from onboarding answers |
+| GET | `/api/v1/users` | List saved user profiles |
+| GET | `/api/v1/users/{user_id}` | Fetch single saved user profile |
 | POST | `/api/v1/ops/crawl-refresh` | Run corpus crawl/ingestion refresh |
 | POST | `/api/v1/ops/subset-refresh` | Refresh topic and persona subsets |
 | GET | `/api/v1/ops/freshness-metrics` | Freshness and staleness metrics |
@@ -93,6 +111,8 @@ Scenario 1 (Navigator):    Ingest -> Extract -> Cluster -> Synthesise -> Q&A -> 
 Scenario 2 (Feed):         Profile -> Rank -> Adapt (x2 personas in parallel)
 Scenario 3 (Video):        Ingest -> Script -> FactCheck -> ScenePlan -> LangValidate -> Audio -> Video
 ```
+
+UI layout: Tab 1 News Navigator, Tab 2 My ET onboarding, Tab 3 Personalised Feed, Tab 4 Vernacular Video (+ Settings page for ops/compliance/measurement).
 
 See [architecture.md](architecture.md) for the full architecture document with diagrams.
 

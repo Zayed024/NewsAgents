@@ -19,7 +19,7 @@ The ET AI News Navigator is a **15-agent multi-agent system** that transforms ho
 ```
                               +---------------------------+
                               |     Streamlit Frontend     |
-                              |  Tab 1 | Tab 2 | Tab 3    |
+                              | Tab1 | Tab2 | Tab3 | Tab4 |
                               +---------------------------+
                                          |
                               +---------------------------+
@@ -100,16 +100,6 @@ Each agent step logs estimated token count and USD cost in the audit trail, maki
 
 **Runs in parallel** for both personas. Delta summary quantifies differences (story overlap, format changes, reading level shift).
 
-### Scenario 3: Vernacular Video (7 agents, 7 languages, <60s)
-
-| # | Agent | Model | Key Behaviour |
-|---|-------|-------|---------------|
-| 1 | UserProfiler | Flash | Converts profile JSON to content delivery preferences |
-| 2 | ContentRanker | Flash | Ranks articles by persona-specific relevance |
-| 3 | ContentAdapter | Pro | Rewrites content: CFO gets data tables, beginner gets ELI5 |
-
-**Runs in parallel** for both personas, then compares outputs.
-
 ### Scenario 3: Vernacular Video (5 agents, <60s budget)
 
 | # | Agent | Model | Time Budget | Key Behaviour |
@@ -166,7 +156,7 @@ Audit trails are returned with every API response and displayed in the UI with c
 | LLMs (Fallback) | Gemini 2.0 Pro + Flash | Secondary fallback, pay-as-you-go |
 | Local Fallback | Ollama + qwen2.5vl:3b | Zero-cost degradation, enterprise resilience |
 | Backend | FastAPI 0.115.9 | Async-native, OpenAPI docs |
-| Frontend | Streamlit 1.48.1 | Rapid prototyping, 3-tab interface |
+| Frontend | Streamlit 1.48.1 | Rapid prototyping, 4-tab interface + settings page |
 | Graph Visualization | Plotly 5.0.0 | Interactive, hoverable entity-angle network graphs |
 | TTS | edge-tts 7.2.8 | 8 Indian languages with language-specific voices |
 | Video | Pillow + ffmpeg 8.0 | Chapter frames + A/V sync composition |
@@ -178,7 +168,7 @@ Audit trails are returned with every API response and displayed in the UI with c
 
 ## Frontend UI Features
 
-The Streamlit interface exposes all three pipelines through a 3-tab design with integrated visualization and controls:
+The Streamlit interface exposes all pipelines through a 4-tab design with integrated visualization and controls:
 
 ### Tab 1: News Navigator
 - **Briefing Generation**: Topic input with optional topic coverage enforcement
@@ -191,12 +181,18 @@ The Streamlit interface exposes all three pipelines through a 3-tab design with 
 - **Follow-up Q&A**: Ask clarifying questions on the briefing (history-aware, non-repeating answers)
 - **Engagement Metrics**: Article count, angle count, pipeline latency, estimated cost
 
-### Tab 2: Personalised Feed
-- **Persona Selection**: CFO vs. Young Investor profiles (extensible)
-- **Side-by-side Comparison**: Delta summary showing story overlap, format changes, reading level
-- **Adaptive Content**: Persona-specific rewrites (depth, tone, jargon, visualizations)
+### Tab 2: My ET — Create Your Profile
+- **Onboarding Mode Selection**: Quick start or deep setup
+- **Guided Profile Creation**: Structured onboarding questions mapped to a saved user profile
+- **Profile Persistence**: Saved users become available in Tab 3 feed generation
 
-### Tab 3: Vernacular Video
+### Tab 3: Personalised Feed
+- **User-Scoped Feed Generation**: Full pipeline from profile-aware subset to adapted cards
+- **Sectioned Feed UX**: Headline picks, thematic sections, in-feed search
+- **Article Metadata Layer**: Urgency, sentiment, credibility, freshness indicators
+- **A/B Comparison**: Personalized vs baseline delta metrics and persisted Phase 7 run logging
+
+### Tab 4: Vernacular Video
 - **Language Selection**: 8 languages with native voices (Hindi, Marathi, Tamil, Telugu, Kannada, Bhojpuri, Punjabi, English)
 - **Video Generation**: Chaptered explainer video with fact-checked narration
 - **Scene Viewer**: Timeline visualization with chapter metadata
@@ -205,6 +201,7 @@ The Streamlit interface exposes all three pipelines through a 3-tab design with 
 - **Runtime Flags**: Visibility into Retrieval Contracts and Corpus Kill Switch status
 - **Ops Controls**: Crawl refresh, subset refresh, freshness metrics, recent run summaries
 - **Compliance Controls**: Load compliance snapshots, generate compliance reports
+- **Measurement + A/B**: View run summary, win rate, relevance lift, and recent comparison runs
 
 ---
 

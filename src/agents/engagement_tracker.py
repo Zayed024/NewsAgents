@@ -213,3 +213,192 @@ def get_engagement_summary() -> dict:
         )[:5],
         "total_queries": len(store["global"].get("queries", [])),
     }
+
+
+# --- Phase 4: Article Feedback Tracking ---
+
+FEEDBACK_REASONS = {
+    "interested": [
+        "Relevant to my portfolio",
+        "Great explanation",
+        "Market-moving news",
+        "Actionable insights",
+        "Timely topic",
+    ],
+    "not_interested": [
+        "Not relevant to my interests",
+        "Too technical/complex",
+        "Too basic/simple",
+        "Already know this",
+        "Sensationalized",
+        "Not credible source",
+        "Duplicate/repetitive",
+    ],
+}
+
+
+def log_article_feedback(
+    user_id: str,
+    article_id: str,
+    feedback_type: str,  # "interested" or "not_interested"
+    reason: str = None,
+    session_id: str = "default",
+) -> dict:
+    """Log article feedback (interested / not interested) with optional reason.
+    
+    Args:
+        user_id: User identifier
+        article_id: Article ID that was rated
+        feedback_type: "interested" or "not_interested"
+        reason: Optional reason (should be from FEEDBACK_REASONS)
+        session_id: Session ID for audit
+    
+    Returns:
+        Dict with feedback_id, timestamp, user_id, article_id, feedback_type, reason
+    """
+    if feedback_type not in ["interested", "not_interested"]:
+        raise ValueError(f"Invalid feedback_type: {feedback_type}")
+    
+    store = _load_store()
+    
+    # Initialize user if needed
+    user = store["users"].setdefault(user_id, {
+        "angle_clicks": {},
+        "queries": [],
+        "feed_clicks": [],
+        "article_feedback": [],  # Phase 4 addition
+        "preferred_depth": "intermediate",
+        "sessions": 0,
+    })
+    
+    # Create feedback record
+    feedback_record = {
+        "article_id": article_id,
+        "feedback_type": feedback_type,
+        "reason": reason,
+        "timestamp": time.time(),
+    }
+    
+    # Append to feedback history (keep last 100)
+    user.setdefault("article_feedback", []).append(feedback_record)
+    user["article_feedback"] = user["article_feedback"][-100:]
+    
+    # Update global stats
+    store["global"].setdefault("article_feedback", {})
+    store["global"]["article_feedback"][feedback_type] = \
+        store["global"]["article_feedback"].get(feedback_type, 0) + 1
+    
+    _save_store(store)
+    
+    log_agent_step(
+        agent_name="EngagementTracker",
+        action="log_article_feedback",
+        model_used="local (no LLM)",
+        input_summary=f"User: {user_id}, Article: {article_id}, Type: {feedback_type}",
+        output_summary=f"Feedback recorded. Reason: {reason or 'none'}",
+        latency_ms=0,
+        session_id=session_id,
+    )
+    
+    return {
+        "feedback_type": feedback_type,
+        "article_id": article_id,
+        "reason": reason,
+        "timestamp": feedback_record["timestamp"],
+    }
+
+
+def get_user_feedback_summary(user_id: str) -> dict:
+    """Get summary of user's article feedback.
+    
+    Returns:
+        Dict with interested_count, not_interested_count, interested_reasons, not_interested_reasons
+    """
+    store = _load_store()
+    user = store["users"].get(user_id, {})
+    feedback_list = user.get("article_feedback", [])
+    
+    interested = [f for f in feedback_list if f["feedback_type"] == "interested"]
+    not_interested = [f for f in feedback_list if f["feedback_type"] == "not_interested"]
+    
+    # Extract reason frequencies
+    interested_reasons = defaultdict(int)
+    for f in interested:
+        if f.get("reason"):
+            interested_reasons[f["reason"]] += 1
+    
+    not_interested_reasons = defaultdict(int)
+    for f in not_interested:
+        if f.get("reason"):
+            not_interested_reasons[f["reason"]] += 1
+    
+    return {
+        "interested_count": len(interested),
+        "not_interested_count": len(not_interested),
+        "interested_reasons": dict(sorted(interested_reasons.items(), key=lambda x: x[1], reverse=True)),
+        "not_interested_reasons": dict(sorted(not_interested_reasons.items(), key=lambda x: x[1], reverse=True)),
+    }
+
+
+def get_feedback_weighted_topics(user_id: str) -> dict:
+    """Get topics the user has given positive feedback on.
+    
+    Returns article tags that were marked "interested" more frequently.
+    Can be used to re-weight next feed generation.
+    
+    Returns:
+        Dict with liked_tags and disliked_tags (lists of strings with counts)
+    """
+    store = _load_store()
+    user = store["users"].get(user_id, {})
+    
+    # Note: This would need article metadata linking article_id → tags
+    # For now, return structure ready for Phase 5 enhancement
+    
+    return {
+        "liked_tags": [],
+        "disliked_tags": [],
+        "note": "Phase 5 will use article metadata to map feedback → tags → reweighting",
+    }
+
+
+def should_show_article_again(user_id: str, article_id: str) -> bool:
+    """Check if user explicitly said they're not interested in similar articles.
+    
+    Args:
+        user_id: User identifier
+        article_id: Article ID to check
+    
+    Returns:
+        False if user marked this exact article as "not_interested", True otherwise
+    """
+    store = _load_store()
+    user = store["users"].get(user_id, {})
+    feedback_list = user.get("article_feedback", [])
+    
+    for f in feedback_list:
+        if f["article_id"] == article_id and f["feedback_type"] == "not_interested":
+            return False
+    
+    return True
+
+
+def get_feedback_signal_for_ranker(user_id: str) -> dict:
+    """Generate feedback signal to pass to ranker for re-weighting.
+    
+    For Phase 5+, this feeds into ranker to boost/penalize articles
+    based on user feedback patterns from current session.
+    
+    Returns:
+        Dict with liked_count, disliked_count, dislikes_map, session_feedback_weight
+    """
+    summary = get_user_feedback_summary(user_id)
+    
+    return {
+        "liked_count": summary["interested_count"],
+        "disliked_count": summary["not_interested_count"],
+        "liked_reasons": summary["interested_reasons"],
+        "disliked_reasons": summary["not_interested_reasons"],
+        "session_feedback_weight": min(1.0, summary["interested_count"] + summary["not_interested_count"]) / 10.0,
+    }
+
