@@ -1,4 +1,4 @@
-"""News Navigator pipeline — orchestrates all 5 agents sequentially."""
+"""News Navigator pipeline — orchestrates all agents sequentially + engagement tracking."""
 
 from src.models import (
     Article, EntityMap, AngleCluster, SynthesisEntry,
@@ -15,6 +15,11 @@ from src.agents.navigator.briefing_builder import build_interactive_briefing
 from src.agents.navigator.topic_relevance import select_relevant_articles_for_topic
 from src.agents.navigator.entity_graph import build_entity_navigation_map
 from src.agents.navigator.query_responder import respond_to_query, clear_query_history
+from src.agents.navigator.chroma_store import index_articles, search_articles
+from src.agents.engagement_tracker import (
+    log_angle_click, log_query, log_session_start,
+    get_retuned_angle_order, get_user_interest_vector,
+)
 
 
 # In-memory briefing cache
@@ -26,24 +31,33 @@ async def run_navigator_pipeline(
     session_id: str = "default",
     topic: str = "",
     enforce_topic_coverage: bool = False,
+    user_id: str = "anonymous",
 ) -> NavigatorBriefingResponse:
     """Run the full News Navigator pipeline.
 
     Steps:
-    1. ArticleIngestor — parse and extract metadata (Flash)
-    2. EntityExtractor — build entity-to-article index (Flash)
-    3. AngleClustering — cluster into 5-7 angles (Pro)
-    4. SynthesisEngine — synthesize each angle (Pro)
+    1. TopicRelevance — filter articles if enforce_topic_coverage (Flash)
+    2. ArticleIngestor — parse and extract metadata (Flash)
+    3. EntityExtractor — build entity-to-article index (Flash)
+    4. AngleClustering — cluster into 5-7 angles (Pro)
+    5. SynthesisEngine — synthesize each angle (Pro)
+    6. BriefingBuilder — build unified deep briefing (Pro)
+    7. ChromaDB indexing — embed articles for follow-up Q&A
+    8. EngagementTracker — retune angle order from history
 
     Args:
         articles: List of raw articles
         session_id: Session ID for audit and caching
+        topic: Topic for relevance filtering
+        enforce_topic_coverage: Whether to filter by topic
+        user_id: User ID for engagement tracking
 
     Returns:
         NavigatorBriefingResponse with angles, syntheses, and audit trail
     """
     clear_audit_trail(session_id)
     clear_query_history(session_id)
+    log_session_start(user_id, session_id)
 
     coverage_report = TopicRetrievalContract(
         topic=topic,
@@ -92,6 +106,40 @@ async def run_navigator_pipeline(
             session_id,
         )
 
+        # Step 6: Index articles in ChromaDB for semantic search
+        try:
+            indexed = index_articles(articles)
+            log_agent_step(
+                agent_name="ChromaDB",
+                action="index_articles",
+                model_used="sentence-transformers (local)",
+                input_summary=f"{len(articles)} articles",
+                output_summary=f"{indexed} newly indexed",
+                latency_ms=0,
+                session_id=session_id,
+            )
+        except Exception:
+            pass  # ChromaDB is optional — don't fail the pipeline
+
+        # Step 7: Retune angle order based on engagement history
+        angle_names = [a.angle_name for a in angles]
+        retuned_order = get_retuned_angle_order(user_id, angle_names)
+        if retuned_order != angle_names:
+            angle_map = {a.angle_name: a for a in angles}
+            angles = [angle_map[name] for name in retuned_order if name in angle_map]
+            synth_map = {s.angle_name: s for s in syntheses}
+            syntheses = [synth_map[name] for name in retuned_order if name in synth_map]
+
+            log_agent_step(
+                agent_name="EngagementTracker",
+                action="retune_angle_order",
+                model_used="local (no LLM)",
+                input_summary=f"User: {user_id}, original: {angle_names[:3]}",
+                output_summary=f"Retuned: {retuned_order[:3]}",
+                latency_ms=0,
+                session_id=session_id,
+            )
+
     # Log overall pipeline completion
     log_agent_step(
         agent_name="NavigatorPipeline",
@@ -113,6 +161,7 @@ async def run_navigator_pipeline(
         "deep_briefing_markdown": deep_briefing_markdown,
         "suggested_questions": suggested_questions,
         "coverage_report": coverage_report,
+        "user_id": user_id,
     }
 
     return NavigatorBriefingResponse(
@@ -142,6 +191,8 @@ async def handle_query(
 ) -> NavigatorQueryResponse:
     """Handle a follow-up question on an existing briefing.
 
+    Uses ChromaDB for semantic article retrieval and logs engagement.
+
     Args:
         question: User's question
         session_id: Session ID to look up cached briefing
@@ -158,12 +209,32 @@ async def handle_query(
             audit_trail=[],
         )
 
+    # Use ChromaDB to find most relevant articles for this question
+    try:
+        relevant = search_articles(question, n_results=5)
+        if relevant:
+            log_agent_step(
+                agent_name="ChromaDB",
+                action="semantic_search",
+                model_used="sentence-transformers (local)",
+                input_summary=f"Query: {question[:80]}",
+                output_summary=f"Top match: {relevant[0]['title'][:60]}",
+                latency_ms=0,
+                session_id=session_id,
+            )
+    except Exception:
+        relevant = []
+
     result = await respond_to_query(
         question=question,
         syntheses=cache["syntheses"],
         articles=cache["articles"],
         session_id=session_id,
     )
+
+    # Log engagement signal
+    user_id = cache.get("user_id", "anonymous")
+    log_query(user_id, question, result.angle, session_id)
 
     return NavigatorQueryResponse(
         answer=result.answer,
