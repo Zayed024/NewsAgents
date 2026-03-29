@@ -91,8 +91,20 @@ def load_breaking_news(article_id: str | None = None) -> Article:
 
 
 def load_user_profile(profile_name: str) -> UserProfile:
-    """Load a user profile by name (e.g. 'cfo_profile' or 'young_investor_profile')."""
-    path = os.path.join(DATA_DIR, "user_profiles", f"{profile_name}.json")
+    """Load a user profile by name or user_id.
+
+    Handles both old names (cfo_profile) and new names (user-cfo-001).
+    """
+    # Migration map for renamed profiles
+    _PROFILE_ALIASES = {
+        "cfo_profile": "user-cfo-001",
+        "young_investor_profile": "user-young-001",
+    }
+    resolved = _PROFILE_ALIASES.get(profile_name, profile_name)
+    path = os.path.join(DATA_DIR, "user_profiles", f"{resolved}.json")
+    if not os.path.exists(path):
+        # Try original name as fallback
+        path = os.path.join(DATA_DIR, "user_profiles", f"{profile_name}.json")
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
     return UserProfile(**data)

@@ -18,9 +18,15 @@ output/
 # Runtime corpus artifacts (generated during ops/compliance runs)
 data/corpus/articles.jsonl
 data/corpus/subsets/*.json
+data/corpus/subsets/profile_specific/
 data/corpus/ops/*.jsonl
 data/corpus/compliance/*.jsonl
 data/corpus/compliance/reports/
+
+# Auto-generated user profiles (from onboarding — keep only seed profiles)
+data/user_profiles/test-*.json
+data/user_profiles/user-cc*.json
+data/user_profiles/user-fb*.json
 
 # OS/editor noise
 .DS_Store
@@ -35,8 +41,10 @@ demonstration_script.py
 quick_demo.py
 refactor_ui.py
 
-# Internal status docs (not submission deliverables)
+# Internal status/runbook docs (not submission deliverables)
 ACHIEVEMENT_REPORT.md
 EXECUTIVE_SUMMARY.md
 FINAL_PRESENTATION_REPORT.md
 PROJECT_STATUS.md
+PHASE7_AB_RUNBOOK.md
+TESTING_GUIDE.md
