@@ -83,11 +83,13 @@ def test_model_routing():
     """Verify smart model routing returns correct models."""
     from src.model_router import get_model, get_routing_summary
 
-    assert "flash" in get_model("extraction").lower()
-    assert "flash" in get_model("fact_checking").lower()
+    assert get_model("extraction") == "flash"
+    assert get_model("fact_checking") == "flash"
+    assert get_model("synthesis") == "pro"
     summary = get_routing_summary()
     assert "routing_table" in summary
-    assert "cost_estimates" in summary
+    assert "active_provider" in summary
+    assert "fallback_chain" in summary
 
     print("MODEL ROUTING OK")
 
