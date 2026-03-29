@@ -4,6 +4,7 @@ import sys
 import os
 import asyncio
 import time
+import math
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -70,6 +71,191 @@ def run_async(coro):
         loop.close()
 
 
+def build_entity_graph_dot(entity_navigation: dict) -> str:
+    """Build a compact Graphviz graph from entity-to-angle navigation data."""
+    lines = [
+        "digraph EntityGraph {",
+        "rankdir=LR;",
+        'graph [fontsize=10 fontname="Arial"];',
+        'node [shape=box style=rounded fontsize=10 fontname="Arial"];',
+        'edge [fontsize=9 fontname="Arial"];',
+    ]
+
+    for entity_type, entries in (entity_navigation or {}).items():
+        for entry in entries or []:
+            entity_name = str(entry.get("entity", "")).strip()
+            if not entity_name:
+                continue
+
+            entity_node = f'{entity_type}:{entity_name}'
+            lines.append(f'"{entity_node}" [label="{entity_name}\\n({entity_type})" color="#2563eb"];')
+
+            for angle_name in entry.get("angles", []) or []:
+                angle_node = f'angle:{angle_name}'
+                lines.append(f'"{angle_node}" [label="{angle_name}" color="#ea580c"];')
+                lines.append(f'"{entity_node}" -> "{angle_node}";')
+
+    lines.append("}")
+    return "\n".join(lines)
+
+
+def build_entity_graph_interactive(entity_navigation: dict):
+    """Build an interactive Plotly entity graph; return None if Plotly is unavailable."""
+    try:
+        import plotly.graph_objects as go
+    except Exception:
+        return None
+
+    entity_nodes: dict[str, dict] = {}
+    angle_nodes: set[str] = set()
+    edges: list[tuple[str, str, int, int]] = []
+
+    for entity_type, entries in (entity_navigation or {}).items():
+        for entry in entries or []:
+            entity_name = str(entry.get("entity", "")).strip()
+            if not entity_name:
+                continue
+
+            node_id = f"{entity_type}:{entity_name}"
+            entity_nodes[node_id] = {
+                "name": entity_name,
+                "type": entity_type,
+                "article_count": int(entry.get("article_count", 0)),
+                "angle_count": int(entry.get("angle_count", 0)),
+            }
+
+            for angle_name in entry.get("angles", []) or []:
+                angle = str(angle_name).strip()
+                if not angle:
+                    continue
+                angle_nodes.add(angle)
+                edges.append((node_id, angle, int(entry.get("article_count", 0)), int(entry.get("angle_count", 0))))
+
+    if not entity_nodes or not angle_nodes:
+        return None
+
+    entity_ids = list(entity_nodes.keys())
+    angle_ids = sorted(angle_nodes)
+
+    positions: dict[str, tuple[float, float]] = {}
+
+    # Place entity nodes on the left in a circular arc.
+    n_entities = len(entity_ids)
+    for i, node_id in enumerate(entity_ids):
+        theta = (2 * math.pi * i / max(1, n_entities)) - (math.pi / 2)
+        x = -1.4 + 0.35 * math.cos(theta)
+        y = 0.9 * math.sin(theta)
+        positions[node_id] = (x, y)
+
+    # Place angle nodes on the right in a vertical lane.
+    n_angles = len(angle_ids)
+    for i, angle_id in enumerate(angle_ids):
+        y = 0 if n_angles == 1 else 1.0 - (2.0 * i / (n_angles - 1))
+        positions[f"angle:{angle_id}"] = (1.4, y)
+
+    edge_x: list[float] = []
+    edge_y: list[float] = []
+    hover_x: list[float] = []
+    hover_y: list[float] = []
+    hover_text: list[str] = []
+
+    for src, angle, article_count, angle_count in edges:
+        sx, sy = positions[src]
+        tx, ty = positions[f"angle:{angle}"]
+        edge_x.extend([sx, tx, None])
+        edge_y.extend([sy, ty, None])
+
+        hover_x.append((sx + tx) / 2)
+        hover_y.append((sy + ty) / 2)
+        hover_text.append(
+            f"Entity: {entity_nodes[src]['name']}<br>"
+            f"Angle: {angle}<br>"
+            f"Entity article count: {article_count}<br>"
+            f"Entity angle count: {angle_count}"
+        )
+
+    node_x: list[float] = []
+    node_y: list[float] = []
+    node_text: list[str] = []
+    node_labels: list[str] = []
+    node_color: list[str] = []
+
+    for node_id in entity_ids:
+        x, y = positions[node_id]
+        meta = entity_nodes[node_id]
+        node_x.append(x)
+        node_y.append(y)
+        node_labels.append(meta["name"])
+        node_color.append("#2563eb")
+        node_text.append(
+            f"Entity: {meta['name']}<br>"
+            f"Type: {meta['type']}<br>"
+            f"Articles: {meta['article_count']}<br>"
+            f"Related angles: {meta['angle_count']}"
+        )
+
+    for angle in angle_ids:
+        x, y = positions[f"angle:{angle}"]
+        node_x.append(x)
+        node_y.append(y)
+        node_labels.append(angle)
+        node_color.append("#ea580c")
+        node_text.append(f"Angle: {angle}")
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=edge_x,
+            y=edge_y,
+            mode="lines",
+            line=dict(color="#94a3b8", width=1),
+            hoverinfo="skip",
+            showlegend=False,
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=hover_x,
+            y=hover_y,
+            mode="markers",
+            marker=dict(size=8, color="rgba(0,0,0,0)"),
+            hoverinfo="text",
+            hovertext=hover_text,
+            name="Connections",
+            showlegend=False,
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=node_x,
+            y=node_y,
+            mode="markers+text",
+            marker=dict(size=18, color=node_color, line=dict(color="#0f172a", width=1)),
+            text=node_labels,
+            textposition="top center",
+            hoverinfo="text",
+            hovertext=node_text,
+            name="Nodes",
+            showlegend=False,
+        )
+    )
+
+    fig.update_layout(
+        margin=dict(l=10, r=10, t=10, b=10),
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        hovermode="closest",
+        height=460,
+    )
+
+    return fig
+
+
 # --- Header ---
 col1, col2 = st.columns([3, 1])
 with col1:
@@ -78,6 +264,121 @@ with col1:
 with col2:
     st.markdown("**Multi-Agent Architecture**")
     st.caption("12 agents | 3 models | Smart routing")
+    if st.button("Settings", key="open_settings_page", use_container_width=True):
+        st.session_state["show_settings_page"] = True
+        st.rerun()
+
+if st.session_state.get("show_settings_page", False):
+    back_col, title_col = st.columns([1, 4])
+    with back_col:
+        if st.button("Back", key="close_settings_page"):
+            st.session_state["show_settings_page"] = False
+            st.rerun()
+    with title_col:
+        st.subheader("Settings")
+
+    st.caption("Dedicated settings page for runtime flags, ops actions, and compliance controls.")
+    st.markdown("**Runtime Flags**")
+
+    from src.config import is_retrieval_contracts_enabled
+    from src.tools.corpus.compliance import (
+        generate_compliance_report,
+        is_corpus_kill_switch_enabled,
+        load_compliance_snapshots,
+    )
+
+    flag_col1, flag_col2 = st.columns(2)
+    with flag_col1:
+        st.metric("Retrieval Contracts", "Enabled" if is_retrieval_contracts_enabled() else "Disabled")
+    with flag_col2:
+        st.metric("Corpus Kill Switch", "On" if is_corpus_kill_switch_enabled() else "Off")
+
+    st.divider()
+    st.markdown("**Ops**")
+
+    from src.tools.corpus.operations import (
+        compute_freshness_metrics,
+        load_recent_run_summaries,
+        run_crawl_refresh,
+        run_subset_refresh,
+    )
+
+    ops_topic = st.text_input("Ops topic", value="Union Budget 2026", key="settings_ops_topic")
+    ops_max_pages = st.number_input("Max pages", min_value=1, max_value=120, value=60, key="settings_ops_max_pages")
+    ops_max_depth = st.number_input("Max depth", min_value=1, max_value=4, value=2, key="settings_ops_max_depth")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("Run Crawl Refresh", key="settings_run_crawl_refresh"):
+            with st.spinner("Running crawl refresh..."):
+                try:
+                    summary = run_crawl_refresh(
+                        topic=ops_topic,
+                        max_pages=int(ops_max_pages),
+                        max_depth=int(ops_max_depth),
+                    )
+                    st.session_state["settings_last_crawl_summary"] = summary
+                    st.success(f"Crawl refresh completed with status: {summary.get('status', 'unknown')}")
+                except Exception as e:
+                    st.error(f"Crawl refresh failed: {e}")
+    with c2:
+        if st.button("Run Subset Refresh", key="settings_run_subset_refresh"):
+            with st.spinner("Running subset refresh..."):
+                try:
+                    summary = run_subset_refresh(topics=[ops_topic])
+                    st.session_state["settings_last_subset_summary"] = summary
+                    st.success(f"Subset refresh completed with status: {summary.get('status', 'unknown')}")
+                except Exception as e:
+                    st.error(f"Subset refresh failed: {e}")
+
+    if st.button("Refresh Freshness Metrics", key="settings_refresh_metrics"):
+        try:
+            st.session_state["settings_freshness_metrics"] = compute_freshness_metrics()
+        except Exception as e:
+            st.error(f"Failed to load freshness metrics: {e}")
+
+    metrics = st.session_state.get("settings_freshness_metrics")
+    if metrics:
+        with st.expander("Freshness Metrics", expanded=False):
+            st.json(metrics)
+
+    if st.button("Load Recent Run Summaries", key="settings_load_run_summaries"):
+        try:
+            st.session_state["settings_run_summaries"] = load_recent_run_summaries(limit=20)
+        except Exception as e:
+            st.error(f"Failed to load run summaries: {e}")
+
+    summaries = st.session_state.get("settings_run_summaries")
+    if summaries:
+        with st.expander("Recent Run Summaries", expanded=False):
+            st.json(summaries)
+
+    st.divider()
+    st.markdown("**Compliance**")
+
+    if st.button("Load Compliance Snapshots", key="settings_load_compliance_snapshots"):
+        try:
+            st.session_state["settings_compliance_snapshots"] = load_compliance_snapshots(limit=100)
+        except Exception as e:
+            st.error(f"Failed to load compliance snapshots: {e}")
+
+    if st.button("Generate Compliance Report", key="settings_generate_compliance_report"):
+        try:
+            st.session_state["settings_compliance_report"] = generate_compliance_report(limit=500, persist=False)
+        except Exception as e:
+            st.error(f"Failed to generate compliance report: {e}")
+
+    snapshots = st.session_state.get("settings_compliance_snapshots")
+    if snapshots:
+        with st.expander("Compliance Snapshots", expanded=False):
+            st.json(snapshots[-20:])
+
+    compliance_report = st.session_state.get("settings_compliance_report")
+    if compliance_report:
+        with st.expander("Compliance Report", expanded=False):
+            st.json(compliance_report)
+
+    st.stop()
 
 # --- Tabs ---
 tab1, tab2, tab3 = st.tabs([
@@ -93,6 +394,17 @@ with tab1:
     st.header("Union Budget 2026 — Interactive Intelligence Briefing")
     st.markdown("*22 articles synthesised into navigable angles with interactive Q&A*")
 
+    topic = st.text_input(
+        "Briefing topic",
+        value="Union Budget 2026",
+        key="navigator_topic",
+    )
+    enforce_topic_coverage = st.checkbox(
+        "Enforce topic coverage scan across available corpus articles",
+        value=True,
+        key="navigator_enforce_topic_coverage",
+    )
+
     # Generate briefing button
     if st.button("Generate Briefing", key="gen_briefing", type="primary"):
         with st.spinner("Running 5-agent pipeline: Ingest → Extract → Cluster → Synthesise..."):
@@ -100,9 +412,16 @@ with tab1:
                 from src.tools.article_loader import load_budget_articles
                 from src.agents.navigator.pipeline import run_navigator_pipeline
 
-                articles = load_budget_articles()
+                articles = load_budget_articles(topic=topic)
                 start = time.time()
-                result = run_async(run_navigator_pipeline(articles, "navigator"))
+                result = run_async(
+                    run_navigator_pipeline(
+                        articles,
+                        "navigator",
+                        topic=topic,
+                        enforce_topic_coverage=enforce_topic_coverage,
+                    )
+                )
                 elapsed = time.time() - start
 
                 st.session_state["briefing"] = result
@@ -126,6 +445,55 @@ with tab1:
         m3.metric("Pipeline Time", f"{st.session_state.get('briefing_time', 0):.1f}s")
         m4.metric("Agents Used", "7")
         m5.metric("Est. Cost", f"${cost['total_cost_usd']:.4f}")
+
+        st.divider()
+
+        # Entity graph and explorer (always visible section)
+        st.subheader("Entity Graph")
+        st.caption("Explore how extracted entities connect to briefing angles.")
+
+        entity_navigation = getattr(result, "entity_navigation", {}) or {}
+        entity_types = [etype for etype, items in entity_navigation.items() if items]
+
+        if entity_types:
+            graph_fig = build_entity_graph_interactive(entity_navigation)
+            if graph_fig is not None:
+                st.plotly_chart(graph_fig, use_container_width=True, key="entity_graph_interactive")
+            else:
+                graph_dot = build_entity_graph_dot(entity_navigation)
+                st.graphviz_chart(graph_dot)
+
+            st.markdown("**Entity Explorer**")
+            selected_type = st.selectbox(
+                "Entity type",
+                options=entity_types,
+                key="entity_type_selector",
+            )
+
+            entries = entity_navigation.get(selected_type, [])
+            entity_labels = [
+                f"{entry.get('entity', 'Unknown')} ({entry.get('article_count', 0)} articles, {entry.get('angle_count', 0)} angles)"
+                for entry in entries
+            ]
+
+            if entity_labels:
+                selected_label = st.selectbox(
+                    "Entity",
+                    options=entity_labels,
+                    key="entity_name_selector",
+                )
+                selected_index = entity_labels.index(selected_label)
+                selected_entry = entries[selected_index]
+
+                related_angles = selected_entry.get("angles", [])
+                if related_angles:
+                    st.caption("Related angles")
+                    for idx, angle_name in enumerate(related_angles):
+                        if st.button(f"Open angle: {angle_name}", key=f"entity_angle_btn_{idx}_{angle_name}"):
+                            st.session_state["angle_selector"] = angle_name
+                            st.rerun()
+        else:
+            st.info("No entity graph data available for this run yet. Generate a new briefing to populate entity links.")
 
         st.divider()
 
@@ -316,6 +684,7 @@ with tab3:
 
     # Requested Indian languages in alphabetical order.
     language_options = {
+        "English": "en",
         "Bhojpuri": "bho",
         "Hindi": "hi",
         "Kannada": "kn",

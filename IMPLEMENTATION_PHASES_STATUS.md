@@ -158,6 +158,46 @@ Still open:
 ### UI
 - `ui/app.py` (top-right Settings button that opens dedicated ops/compliance page)
 
+## 6b) UI Feature Wiring Phases (Streamlit Frontend)
+
+### Phase 1: Entity Graph and Explorer
+**Delivered**:
+- Interactive Plotly network graph showing entity-angle relationships
+- Hoverable entity nodes (left arc) with metadata: name, type, article count, related angles
+- Hoverable angle nodes (right lane) with connection details
+- Entity Explorer dropdown selectors for drilling into specific entities
+- Automatic Plotly→Graphviz fallback for robustness
+- Added Plotly 5.0.0 to dependencies
+
+**Key Feature**: Entity graph now interactive and responsive to hover, replacing static Graphviz-only rendering.
+
+### Phase 2: Navigator Topic Coverage Controls
+**Delivered**:
+- Topic input field on Navigator tab
+- Topic coverage enforcement checkbox
+- Both parameters wired into briefing pipeline
+- Enhanced briefing with topic-specific retrieval
+
+### Phase 3: Settings Page Shell
+**Delivered**:
+- Dedicated Settings page opened via top-right button
+- Navigation buttons (Settings → Back to Navigator)
+- Display of runtime flags (Retrieval Contracts, Corpus Kill Switch)
+
+### Phase 4: Ops Actions
+**Delivered**:
+- Crawl refresh action with topic/depth/page controls
+- Subset refresh action
+- Freshness metrics viewer (JSON expander)
+- Recent run summaries viewer (JSON expander)
+
+### Phase 5: Compliance Actions
+**Delivered**:
+- Load compliance snapshots viewer (JSON expander)
+- Generate compliance report action (JSON expander)
+
+**All Phases Status**: ✅ Complete and tested
+
 ## 7) Validation and Test Coverage
 
 Key suites implemented and passing:
