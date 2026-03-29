@@ -10,7 +10,7 @@ The ET AI News Navigator is a multi-agent system that transforms how business ne
 
 1. **News Navigator** — Synthesises 22+ articles into an interactive, angle-based intelligence briefing
 2. **Personalised Feed** — Generates meaningfully different content surfaces for different user personas
-3. **Vernacular Video** — Converts breaking news into a Hindi explainer video in under 60 seconds
+3. **Vernacular Video** — Converts breaking news into a vernacular explainer video in under 60 seconds
 
 ---
 
@@ -58,7 +58,7 @@ A deterministic routing table assigns each task type to the optimal model:
 | Extraction, NER, classification | Gemini 2.0 Flash | $0.10/M tokens | Fast, structured output |
 | Ranking, fact-checking | Gemini 2.0 Flash | $0.10/M tokens | Comparison tasks |
 | Multi-article synthesis | Gemini 2.0 Pro | $1.25/M tokens | Requires editorial judgment |
-| Creative writing (Hindi) | Gemini 2.0 Pro | $1.25/M tokens | Nuance, cultural adaptation |
+| Creative writing (vernacular) | Gemini 2.0 Pro | $1.25/M tokens | Nuance, cultural adaptation |
 | Fallback / degradation | Ollama qwen2.5vl:3b | $0.00 (local) | Enterprise resilience |
 
 **Estimated cost per full pipeline run**: ~$0.08 (vs $0.35 if all tasks used Pro)
@@ -95,9 +95,9 @@ A deterministic routing table assigns each task type to the optimal model:
 | # | Agent | Model | Time Budget | Key Behaviour |
 |---|-------|-------|-------------|---------------|
 | 1 | BreakingIngestor | Flash | ~2s | 5W1H extraction |
-| 2 | ScriptWriter | Pro | ~8s | Hindi script, no English jargon, cultural analogies |
+| 2 | ScriptWriter | Pro | ~8s | Language-aware script with culturally grounded narration |
 | 3 | FactChecker | Flash | ~3s | Claim-by-claim verification against source |
-| 4 | AudioGenerator | edge-tts | ~15s | Hindi TTS (hi-IN-SwaraNeural) |
+| 4 | AudioGenerator | edge-tts | ~15s | Language-aware TTS with configured voice fallback |
 | 5 | VideoComposer | PIL+ffmpeg | ~15s | Visual frames + audio → MP4 |
 
 ---
@@ -142,7 +142,7 @@ Audit trails are returned with every API response and displayed in the UI.
 | Local Fallback | Ollama + qwen2.5vl:3b | Zero-cost degradation, enterprise resilience |
 | Backend | FastAPI 0.115.9 | Async-native, OpenAPI docs |
 | Frontend | Streamlit 1.48.1 | Rapid prototyping, 3-tab interface |
-| TTS | edge-tts 7.2.8 | Free Hindi voices, natural prosody |
+| TTS | edge-tts 7.2.8 | Free multilingual voices with fallback handling |
 | Video | Pillow + ffmpeg 8.0 | Frame generation + composition |
 | Vector Store | ChromaDB 1.0.11 | Article embeddings (available for extension) |
 

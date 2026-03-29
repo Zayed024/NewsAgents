@@ -91,97 +91,110 @@ with col1:
 with col2:
     st.markdown("**Multi-Agent Architecture**")
     st.caption("12 agents | 3 models | Smart routing")
+    if st.button("Settings", key="open_settings_page", use_container_width=True):
+        st.session_state["show_settings_page"] = True
+        st.rerun()
 
-    with st.expander("Settings", expanded=False):
-        st.caption("Operations and compliance controls (separate from main product tabs)")
+if st.session_state.get("show_settings_page", False):
+    top_left, top_right = st.columns([1, 4])
+    with top_left:
+        if st.button("Back", key="close_settings_page"):
+            st.session_state["show_settings_page"] = False
+            st.rerun()
+    with top_right:
+        st.subheader("Settings")
 
-        st.markdown("**Runtime Flags**")
-        st.caption(f"RETRIEVAL_CONTRACTS_ENABLED: {is_retrieval_contracts_enabled()}")
-        st.caption(f"CORPUS_KILL_SWITCH: {is_corpus_kill_switch_enabled()}")
+    st.caption("Operations and compliance controls")
 
-        st.divider()
-        st.markdown("**Ops Actions**")
-        ops_topic = st.text_input("Ops topic", value="Union Budget 2026", key="settings_ops_topic")
-        ops_max_pages = st.number_input("Max pages", min_value=1, max_value=120, value=60, key="settings_ops_max_pages")
-        ops_max_depth = st.number_input("Max depth", min_value=1, max_value=4, value=2, key="settings_ops_max_depth")
+    st.markdown("**Runtime Flags**")
+    st.caption(f"RETRIEVAL_CONTRACTS_ENABLED: {is_retrieval_contracts_enabled()}")
+    st.caption(f"CORPUS_KILL_SWITCH: {is_corpus_kill_switch_enabled()}")
 
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("Run Crawl Refresh", key="settings_run_crawl_refresh"):
-                with st.spinner("Running crawl refresh..."):
-                    try:
-                        summary = run_crawl_refresh(
-                            topic=ops_topic,
-                            max_pages=int(ops_max_pages),
-                            max_depth=int(ops_max_depth),
-                        )
-                        st.session_state["settings_last_crawl_summary"] = summary
-                        st.success(f"Crawl refresh completed with status: {summary.get('status', 'unknown')}")
-                    except Exception as e:
-                        st.error(f"Crawl refresh failed: {e}")
-        with c2:
-            if st.button("Run Subset Refresh", key="settings_run_subset_refresh"):
-                with st.spinner("Running subset refresh..."):
-                    try:
-                        summary = run_subset_refresh(topics=[ops_topic])
-                        st.session_state["settings_last_subset_summary"] = summary
-                        st.success(f"Subset refresh completed with status: {summary.get('status', 'unknown')}")
-                    except Exception as e:
-                        st.error(f"Subset refresh failed: {e}")
+    st.divider()
+    st.markdown("**Ops Actions**")
+    ops_topic = st.text_input("Ops topic", value="Union Budget 2026", key="settings_ops_topic")
+    ops_max_pages = st.number_input("Max pages", min_value=1, max_value=120, value=60, key="settings_ops_max_pages")
+    ops_max_depth = st.number_input("Max depth", min_value=1, max_value=4, value=2, key="settings_ops_max_depth")
 
-        if st.button("Refresh Freshness Metrics", key="settings_refresh_metrics"):
-            try:
-                st.session_state["settings_freshness_metrics"] = compute_freshness_metrics()
-            except Exception as e:
-                st.error(f"Failed to load freshness metrics: {e}")
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("Run Crawl Refresh", key="settings_run_crawl_refresh"):
+            with st.spinner("Running crawl refresh..."):
+                try:
+                    summary = run_crawl_refresh(
+                        topic=ops_topic,
+                        max_pages=int(ops_max_pages),
+                        max_depth=int(ops_max_depth),
+                    )
+                    st.session_state["settings_last_crawl_summary"] = summary
+                    st.success(f"Crawl refresh completed with status: {summary.get('status', 'unknown')}")
+                except Exception as e:
+                    st.error(f"Crawl refresh failed: {e}")
+    with c2:
+        if st.button("Run Subset Refresh", key="settings_run_subset_refresh"):
+            with st.spinner("Running subset refresh..."):
+                try:
+                    summary = run_subset_refresh(topics=[ops_topic])
+                    st.session_state["settings_last_subset_summary"] = summary
+                    st.success(f"Subset refresh completed with status: {summary.get('status', 'unknown')}")
+                except Exception as e:
+                    st.error(f"Subset refresh failed: {e}")
 
-        metrics = st.session_state.get("settings_freshness_metrics")
-        if metrics:
-            with st.expander("Freshness Metrics", expanded=False):
-                corpus = metrics.get("corpus", {})
-                topic_subsets = metrics.get("topic_subsets", {})
-                persona_subsets = metrics.get("persona_subsets", {})
+    if st.button("Refresh Freshness Metrics", key="settings_refresh_metrics"):
+        try:
+            st.session_state["settings_freshness_metrics"] = compute_freshness_metrics()
+        except Exception as e:
+            st.error(f"Failed to load freshness metrics: {e}")
 
-                st.caption(f"Corpus article count: {corpus.get('article_count', 0)}")
-                st.caption(f"Topic stale rate: {topic_subsets.get('stale_rate', 0.0):.2%}")
-                st.caption(f"Persona stale rate: {persona_subsets.get('stale_rate', 0.0):.2%}")
-                st.json(metrics)
+    metrics = st.session_state.get("settings_freshness_metrics")
+    if metrics:
+        with st.expander("Freshness Metrics", expanded=False):
+            corpus = metrics.get("corpus", {})
+            topic_subsets = metrics.get("topic_subsets", {})
+            persona_subsets = metrics.get("persona_subsets", {})
 
-        if st.button("Load Recent Run Summaries", key="settings_load_run_summaries"):
-            try:
-                st.session_state["settings_run_summaries"] = load_recent_run_summaries(limit=20)
-            except Exception as e:
-                st.error(f"Failed to load run summaries: {e}")
+            st.caption(f"Corpus article count: {corpus.get('article_count', 0)}")
+            st.caption(f"Topic stale rate: {topic_subsets.get('stale_rate', 0.0):.2%}")
+            st.caption(f"Persona stale rate: {persona_subsets.get('stale_rate', 0.0):.2%}")
+            st.json(metrics)
 
-        summaries = st.session_state.get("settings_run_summaries")
-        if summaries:
-            with st.expander("Recent Run Summaries", expanded=False):
-                st.json(summaries)
+    if st.button("Load Recent Run Summaries", key="settings_load_run_summaries"):
+        try:
+            st.session_state["settings_run_summaries"] = load_recent_run_summaries(limit=20)
+        except Exception as e:
+            st.error(f"Failed to load run summaries: {e}")
 
-        st.divider()
-        st.markdown("**Compliance**")
+    summaries = st.session_state.get("settings_run_summaries")
+    if summaries:
+        with st.expander("Recent Run Summaries", expanded=False):
+            st.json(summaries)
 
-        if st.button("Load Compliance Snapshots", key="settings_load_compliance_snapshots"):
-            try:
-                st.session_state["settings_compliance_snapshots"] = load_compliance_snapshots(limit=100)
-            except Exception as e:
-                st.error(f"Failed to load compliance snapshots: {e}")
+    st.divider()
+    st.markdown("**Compliance**")
 
-        if st.button("Generate Compliance Report", key="settings_generate_compliance_report"):
-            try:
-                st.session_state["settings_compliance_report"] = generate_compliance_report(limit=500, persist=False)
-            except Exception as e:
-                st.error(f"Failed to generate compliance report: {e}")
+    if st.button("Load Compliance Snapshots", key="settings_load_compliance_snapshots"):
+        try:
+            st.session_state["settings_compliance_snapshots"] = load_compliance_snapshots(limit=100)
+        except Exception as e:
+            st.error(f"Failed to load compliance snapshots: {e}")
 
-        snapshots = st.session_state.get("settings_compliance_snapshots")
-        if snapshots:
-            with st.expander("Compliance Snapshots", expanded=False):
-                st.json(snapshots[-20:])
+    if st.button("Generate Compliance Report", key="settings_generate_compliance_report"):
+        try:
+            st.session_state["settings_compliance_report"] = generate_compliance_report(limit=500, persist=False)
+        except Exception as e:
+            st.error(f"Failed to generate compliance report: {e}")
 
-        compliance_report = st.session_state.get("settings_compliance_report")
-        if compliance_report:
-            with st.expander("Compliance Report", expanded=False):
-                st.json(compliance_report)
+    snapshots = st.session_state.get("settings_compliance_snapshots")
+    if snapshots:
+        with st.expander("Compliance Snapshots", expanded=False):
+            st.json(snapshots[-20:])
+
+    compliance_report = st.session_state.get("settings_compliance_report")
+    if compliance_report:
+        with st.expander("Compliance Report", expanded=False):
+            st.json(compliance_report)
+
+    st.stop()
 
 # --- Tabs ---
 tab1, tab2, tab3 = st.tabs([

@@ -10,7 +10,7 @@ A multi-agent AI system that transforms how business news is consumed — from s
 |----------|-------------|------|
 | **News Navigator** | Synthesises 22 Union Budget articles into an interactive briefing with 6 navigable angles and non-overlapping Q&A | Primary showcase |
 | **Personalised Feed** | Same articles, completely different experience for a CFO vs a 24-year-old first-time investor | Side-by-side comparison |
-| **Vernacular Video** | Breaking news → 60-90s Hindi explainer video in under 60 seconds, fact-checked against source | Full autonomous pipeline |
+| **Vernacular Video** | Breaking news → 60-90s vernacular explainer video in under 60 seconds, fact-checked against source | Full autonomous pipeline |
 
 ## Architecture
 
@@ -78,7 +78,7 @@ For implementation roadmap, completed phases, and pending plan, see [IMPLEMENTAT
 | POST | `/api/v1/navigator/briefing` | Generate full News Navigator briefing |
 | POST | `/api/v1/navigator/query` | Ask follow-up question on briefing |
 | POST | `/api/v1/feed/compare` | Generate side-by-side persona feeds |
-| POST | `/api/v1/video/generate` | Generate Hindi explainer video |
+| POST | `/api/v1/video/generate` | Generate vernacular explainer video |
 | POST | `/api/v1/ops/crawl-refresh` | Run corpus crawl/ingestion refresh |
 | POST | `/api/v1/ops/subset-refresh` | Refresh topic and persona subsets |
 | GET | `/api/v1/ops/freshness-metrics` | Freshness and staleness metrics |
@@ -133,7 +133,7 @@ ET/
 ├── ui/
 │   └── app.py             # Streamlit 3-tab frontend
 ├── data/                  # Sample datasets (22 budget articles, profiles, breaking news)
-├── assets/fonts/          # Hindi font for video frames
+├── assets/fonts/          # Language fonts for video frames
 ├── architecture.md        # Architecture document
 ├── IMPACT_MODEL.md        # Business impact quantification
 └── requirements.txt
@@ -147,7 +147,7 @@ ET/
 | LLMs | Gemini 2.0 Pro + Flash, Ollama qwen2.5vl:3b |
 | Backend | FastAPI + Uvicorn |
 | Frontend | Streamlit |
-| Hindi TTS | edge-tts (hi-IN-SwaraNeural) |
+| Vernacular TTS | edge-tts (language-specific voices) |
 | Video | Pillow + ffmpeg |
 | Data Models | Pydantic v2 |
 

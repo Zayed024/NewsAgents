@@ -61,6 +61,11 @@ def _pick_existing_font(candidates: list[str]) -> str:
 
 
 LANGUAGE_FONT_CANDIDATES = {
+    "en": [
+        os.path.join(WINDOWS_FONTS_DIR, "segoeui.ttf"),
+        os.path.join(WINDOWS_FONTS_DIR, "arial.ttf"),
+        HINDI_FONT_PATH,
+    ],
     "bho": [
         os.path.join(FONTS_DIR, "NotoSansDevanagari-Regular.ttf"),
         os.path.join(WINDOWS_FONTS_DIR, "Nirmala.ttc"),
@@ -101,6 +106,14 @@ LANGUAGE_FONT_CANDIDATES = {
 # --- Language Profiles (Phase 1) ---
 DEFAULT_VIDEO_LANGUAGE = "hi"
 VIDEO_LANGUAGE_PROFILES = {
+    "en": {
+        "label": "English",
+        "tts_voice": "en-IN-NeerjaNeural",
+        "tts_fallback_voices": ["en-IN-PrabhatNeural", "en-US-JennyNeural"],
+        "font_path": _pick_existing_font(LANGUAGE_FONT_CANDIDATES["en"]),
+        "writing_hint": "Write in clear Indian-English business news style.",
+        "validator_hint": "English only.",
+    },
     "bho": {
         "label": "Bhojpuri",
         "tts_voice": "hi-IN-SwaraNeural",
