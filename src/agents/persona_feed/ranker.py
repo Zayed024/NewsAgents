@@ -1,7 +1,6 @@
 """ContentRanker agent — ranks and filters articles based on user preferences."""
 
 from src.llm import call_llm, parse_json_response
-from src.config import GEMINI_FLASH
 from src.audit import log_agent_step, AuditTimer
 from src.models import Article
 
@@ -53,7 +52,7 @@ Include ALL articles. Assign scores between 0.0 and 1.0."""
 
         response = await call_llm(
             prompt=prompt,
-            model=GEMINI_FLASH,
+            model="flash",
             system_instruction=SYSTEM_INSTRUCTION,
             response_mime_type="application/json",
             temperature=0.3,
@@ -70,7 +69,7 @@ Include ALL articles. Assign scores between 0.0 and 1.0."""
     log_agent_step(
         agent_name="ContentRanker",
         action="rank_articles",
-        model_used=GEMINI_FLASH,
+        model_used="flash",
         input_summary=f"User: {user_name}, {len(articles)} articles",
         output_summary=f"Top article: {result[0]['article_id'] if result else 'none'}",
         latency_ms=timer.elapsed_ms,

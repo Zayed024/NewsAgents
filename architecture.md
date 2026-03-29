@@ -55,20 +55,21 @@ The ET AI News Navigator is a **15-agent multi-agent system** that transforms ho
 
 ## Smart Model Routing (Cost Efficiency)
 
-A deterministic routing table assigns each task type to the optimal model — **no LLM-based router overhead**:
+A deterministic routing table assigns each task type to the optimal model — **no LLM-based router overhead**. The system supports **three LLM providers** with automatic fallback:
 
-| Task Type | Model | Cost | Rationale |
-|-----------|-------|------|-----------|
-| Extraction, NER, classification | Gemini 2.0 Flash | $0.10/M tokens | Fast, structured output |
-| Ranking, fact-checking, scene planning | Gemini 2.0 Flash | $0.10/M tokens | Comparison/structuring tasks |
-| Language validation | Gemini 2.0 Flash | $0.10/M tokens | Conditional — only runs when leakage detected |
-| Multi-article synthesis | Gemini 2.0 Pro | $1.25/M tokens | Requires editorial judgment |
-| Creative writing (vernacular) | Gemini 2.0 Pro | $1.25/M tokens | Nuance, cultural adaptation |
-| Creative writing (multilingual scripts) | Gemini 2.0 Pro | $1.25/M tokens | Nuance, cultural adaptation |
-| Fallback / degradation | Ollama qwen2.5vl:3b | $0.00 (local) | Enterprise resilience |
+**Provider Priority**: NVIDIA (primary) > Gemini (secondary) > Ollama (local fallback)
 
-**Estimated cost per full pipeline run**: ~$0.08 (vs ~$0.35 if all tasks used Pro)
-**Cost reduction**: **77% through smart routing**
+| Task Type | Role | NVIDIA (Primary) | Gemini (Fallback) | Cost |
+|-----------|------|-------------------|-------------------|------|
+| Extraction, NER, classification | Flash | Llama-4 Maverick 17B | Gemini 2.0 Flash | Free / $0.10/M |
+| Ranking, fact-checking, scene planning | Flash | Llama-4 Maverick 17B | Gemini 2.0 Flash | Free / $0.10/M |
+| Language validation (conditional) | Flash | Llama-4 Maverick 17B | Gemini 2.0 Flash | Free / $0.10/M |
+| Multi-article synthesis | Pro | Mistral Nemotron | Gemini 2.0 Pro | Free / $1.25/M |
+| Creative writing (multilingual) | Pro | Mistral Nemotron | Gemini 2.0 Pro | Free / $1.25/M |
+| Local fallback / degradation | Ollama | qwen2.5vl:3b | — | $0.00 |
+
+**With NVIDIA free endpoint**: $0.00 per pipeline run
+**With Gemini paid**: ~$0.08 per run (77% savings via smart routing vs all-Pro)
 
 Each agent step logs estimated token count and USD cost in the audit trail, making the cost saving verifiable.
 
@@ -160,14 +161,16 @@ Audit trails are returned with every API response and displayed in the UI with c
 
 | Layer | Technology | Why |
 |-------|-----------|-----|
-| Agent Framework | Google ADK 1.18.0 | Native Gemini integration, SequentialAgent/ParallelAgent patterns |
-| LLMs | Gemini 2.0 Pro + Flash | Smart routing for cost efficiency |
+| Agent Framework | Google ADK 1.18.0 | SequentialAgent/ParallelAgent orchestration patterns |
+| LLMs (Primary) | NVIDIA Mistral Nemotron + Llama-4 Maverick | Free endpoint, strong reasoning + fast extraction |
+| LLMs (Fallback) | Gemini 2.0 Pro + Flash | Secondary fallback, pay-as-you-go |
 | Local Fallback | Ollama + qwen2.5vl:3b | Zero-cost degradation, enterprise resilience |
 | Backend | FastAPI 0.115.9 | Async-native, OpenAPI docs |
 | Frontend | Streamlit 1.48.1 | Rapid prototyping, 3-tab interface |
-| TTS | edge-tts 7.2.8 | Free Hindi voices, natural prosody |
-| Video | Pillow + ffmpeg 8.0 | Frame generation + composition |
-| Vector Store | ChromaDB 1.0.11 | Article embeddings (available for extension) |
+| TTS | edge-tts 7.2.8 | Free multilingual voices (7 Indian languages) |
+| Video | Pillow + ffmpeg 8.0 | Chapter frames + A/V sync composition |
+| Vector Store | ChromaDB 1.0.11 | Semantic article search for Q&A |
+| Engagement | Local JSON store | Cross-session user preference learning |
 
 ---
 

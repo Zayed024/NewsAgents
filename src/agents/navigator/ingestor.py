@@ -3,7 +3,6 @@
 import re
 
 from src.llm import call_llm, parse_json_response
-from src.config import GEMINI_FLASH
 from src.audit import log_agent_step, AuditTimer
 from src.models import Article
 
@@ -58,7 +57,7 @@ Return a JSON array where each element has:
 
         response = await call_llm(
             prompt=prompt,
-            model=GEMINI_FLASH,
+            model="flash",
             system_instruction=SYSTEM_INSTRUCTION,
             response_mime_type="application/json",
             temperature=0.3,
@@ -73,7 +72,7 @@ Return a JSON array where each element has:
     log_agent_step(
         agent_name="ArticleIngestor",
         action="ingest_articles",
-        model_used=GEMINI_FLASH,
+        model_used="flash",
         input_summary=f"{len(articles)} articles",
         output_summary=f"{len(result)} metadata entries extracted",
         latency_ms=timer.elapsed_ms,

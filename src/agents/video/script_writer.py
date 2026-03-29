@@ -3,7 +3,7 @@
 import re
 
 from src.llm import call_llm, parse_json_response
-from src.config import GEMINI_PRO, get_video_language_profile
+from src.config import get_video_language_profile
 from src.audit import log_agent_step, AuditTimer
 from src.models import VideoScript
 
@@ -179,7 +179,7 @@ Return JSON:
 
         response = await call_llm(
             prompt=prompt,
-            model=GEMINI_PRO,
+            model="pro",
             system_instruction=SYSTEM_INSTRUCTION,
             response_mime_type="application/json",
             temperature=0.6,
@@ -198,7 +198,7 @@ Return JSON:
     log_agent_step(
         agent_name="ScriptWriter",
         action="write_script",
-        model_used=GEMINI_PRO,
+        model_used="pro",
         input_summary=f"Facts: {facts.get('what', '')[:80]}",
         output_summary=(
             f"Lang: {language}, Script: {len(result.script_hindi)} chars, "

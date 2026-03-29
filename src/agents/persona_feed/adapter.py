@@ -1,7 +1,6 @@
 """ContentAdapter agent — rewrites article content to match user's format and depth preferences."""
 
 from src.llm import call_llm, parse_json_response
-from src.config import GEMINI_PRO
 from src.audit import log_agent_step, AuditTimer
 from src.models import Article, FeedItem
 
@@ -73,7 +72,7 @@ Return JSON:
 
             response = await call_llm(
                 prompt=prompt,
-                model=GEMINI_PRO,
+                model="pro",
                 system_instruction=SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
                 temperature=0.6,
@@ -98,7 +97,7 @@ Return JSON:
         log_agent_step(
             agent_name="ContentAdapter",
             action=f"adapt_{article.id}",
-            model_used=GEMINI_PRO,
+            model_used="pro",
             input_summary=f"Article: {article.title[:60]} for {user_name}",
             output_summary=f"Format: {item.format_type}, {len(item.adapted_content)} chars",
             latency_ms=timer.elapsed_ms,

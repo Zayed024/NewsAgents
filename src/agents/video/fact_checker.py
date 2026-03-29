@@ -1,7 +1,6 @@
 """FactChecker agent — verifies script claims against source article."""
 
 from src.llm import call_llm, parse_json_response
-from src.config import GEMINI_FLASH
 from src.audit import log_agent_step, AuditTimer
 from src.models import Article, VideoScript, FactCheckReport, FactCheckClaim
 
@@ -65,7 +64,7 @@ Return JSON:
 
         response = await call_llm(
             prompt=prompt,
-            model=GEMINI_FLASH,
+            model="flash",
             system_instruction=SYSTEM_INSTRUCTION,
             response_mime_type="application/json",
             temperature=0.2,
@@ -88,7 +87,7 @@ Return JSON:
     log_agent_step(
         agent_name="FactChecker",
         action="check_facts",
-        model_used=GEMINI_FLASH,
+        model_used="flash",
         input_summary=f"Script: {len(script.script_hindi)} chars vs article: {source_article.title[:60]}",
         output_summary=f"Accuracy: {result.accuracy_score}, Flagged: {len(result.flagged_claims)}",
         latency_ms=timer.elapsed_ms,

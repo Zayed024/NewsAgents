@@ -1,7 +1,6 @@
 """UserProfiler agent — analyzes user profile to determine content preferences."""
 
 from src.llm import call_llm, parse_json_response
-from src.config import GEMINI_FLASH
 from src.audit import log_agent_step, AuditTimer
 from src.models import UserProfile
 
@@ -50,7 +49,7 @@ Return JSON:
 
         response = await call_llm(
             prompt=prompt,
-            model=GEMINI_FLASH,
+            model="flash",
             system_instruction=SYSTEM_INSTRUCTION,
             response_mime_type="application/json",
             temperature=0.3,
@@ -65,7 +64,7 @@ Return JSON:
     log_agent_step(
         agent_name="UserProfiler",
         action="analyze_profile",
-        model_used=GEMINI_FLASH,
+        model_used="flash",
         input_summary=f"User: {profile.name}, {profile.role}",
         output_summary=f"Depth: {result.get('content_depth')}, Format: {result.get('format_preference')}",
         latency_ms=timer.elapsed_ms,

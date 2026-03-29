@@ -14,7 +14,7 @@ A **15-agent multi-agent system** that transforms how business news is consumed 
 
 ## Key Differentiators
 
-- **Smart Model Routing**: Gemini Flash for extraction, Gemini Pro for synthesis, Ollama for fallback — **77% cost reduction**
+- **Smart Model Routing**: NVIDIA Nemotron + Llama-4 (primary), Gemini (fallback), Ollama (local) — **3-tier fallback with free primary**
 - **15 Specialised Agents**: Clear role separation with handoff protocols across 3 pipelines
 - **7 Indian Languages**: Hindi, Marathi, Tamil, Telugu, Kannada, Bhojpuri, Punjabi — with language validation guardrails
 - **Engagement Tracking**: Cross-session learning retunes content delivery without LLM cost (extra credit feature)
@@ -25,9 +25,9 @@ A **15-agent multi-agent system** that transforms how business news is consumed 
 
 ### Prerequisites
 - Python 3.11+
-- Gemini API key
+- NVIDIA API key (free at build.nvidia.com) **or** Gemini API key
 - ffmpeg (for video generation)
-- Ollama with `qwen2.5vl:3b` (optional, for fallback)
+- Ollama with `qwen2.5vl:3b` (optional, local fallback)
 
 ### Setup
 
@@ -36,11 +36,14 @@ git clone https://github.com/Zayed024/NewsAgents.git
 cd NewsAgents
 pip install -r requirements.txt
 
-# Set API key
-export GOOGLE_API_KEY=your_key_here     # Linux/Mac
-set GOOGLE_API_KEY=your_key_here        # Windows
+# Set API key (at least one required; NVIDIA recommended — free endpoint)
+export NVIDIA_API_KEY=your_nvidia_key   # Linux/Mac
+set NVIDIA_API_KEY=your_nvidia_key      # Windows
 
-# Optional: Start Ollama for fallback
+# Or use Gemini
+export GOOGLE_API_KEY=your_key_here     # Linux/Mac
+
+# Optional: Start Ollama for local fallback
 ollama serve &
 ollama pull qwen2.5vl:3b
 ```
@@ -97,7 +100,7 @@ See [architecture.md](architecture.md) for the full architecture document with d
 | Component | Technology |
 |-----------|-----------|
 | Agent Framework | Google ADK 1.18.0 |
-| LLMs | Gemini 2.0 Pro + Flash, Ollama qwen2.5vl:3b |
+| LLMs | NVIDIA Nemotron + Llama-4 (primary), Gemini (fallback), Ollama (local) |
 | Backend | FastAPI + Uvicorn |
 | Frontend | Streamlit |
 | Vernacular TTS | edge-tts (language-specific voices) |

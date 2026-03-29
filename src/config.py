@@ -19,7 +19,7 @@ NVIDIA_FLASH = "meta/llama-4-maverick-17b-128e-instruct"   # Fast extraction/cla
 NVIDIA_API_BASE = "https://integrate.api.nvidia.com/v1"
 
 # Gemini models (fallback if NVIDIA unavailable)
-GEMINI_PRO = "gemini-2.0-flash"
+GEMINI_PRO = "gemini-2.0-pro"
 GEMINI_FLASH = "gemini-2.0-flash"
 
 # Ollama (local fallback)

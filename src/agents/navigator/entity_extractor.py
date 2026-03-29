@@ -1,7 +1,6 @@
 """EntityExtractor agent — builds entity-to-article index from ingested metadata."""
 
 from src.llm import call_llm, parse_json_response
-from src.config import GEMINI_FLASH
 from src.audit import log_agent_step, AuditTimer
 from src.models import EntityMap
 
@@ -51,7 +50,7 @@ Return JSON:
 
         response = await call_llm(
             prompt=prompt,
-            model=GEMINI_FLASH,
+            model="flash",
             system_instruction=SYSTEM_INSTRUCTION,
             response_mime_type="application/json",
             temperature=0.2,
@@ -72,7 +71,7 @@ Return JSON:
     log_agent_step(
         agent_name="EntityExtractor",
         action="extract_entities",
-        model_used=GEMINI_FLASH,
+        model_used="flash",
         input_summary=f"{len(article_metadata)} article metadata entries",
         output_summary=f"{total_entities} unique entities indexed",
         latency_ms=timer.elapsed_ms,
